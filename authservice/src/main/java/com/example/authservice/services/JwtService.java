@@ -17,11 +17,17 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
+
+    private final TokenBlacklistService tokenBlacklistService;
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+
+    public JwtService(TokenBlacklistService tokenBlacklistService) {
+        this.tokenBlacklistService = tokenBlacklistService;
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -59,6 +65,11 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        // Kiểm tra trước nếu token đã bị blacklist
+        if (tokenBlacklistService.isBlacklisted(token)) {
+            return false;
+        }
+        
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
@@ -82,5 +93,9 @@ public class JwtService {
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public long getExpirationFromToken(String token) {
+        return extractExpiration(token).getTime();
     }
 }
