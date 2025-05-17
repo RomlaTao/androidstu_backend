@@ -29,7 +29,8 @@ userservice/
 ## API Endpoints
 
 ### Users
-- **GET** `/api/users` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
+- **GET** `/users` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users`
   Response:
   ```json
   [
@@ -49,7 +50,8 @@ userservice/
   ]
   ```
 
-- **GET** `/api/users/{id}` - Lấy thông tin người dùng theo ID (yêu cầu JWT)
+- **GET** `/users/{id}` - Lấy thông tin người dùng theo ID (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/{id}`
   Response:
   ```json
   {
@@ -67,10 +69,16 @@ userservice/
   }
   ```
 
-- **GET** `/api/users/email/{email}` - Lấy thông tin người dùng theo email (yêu cầu JWT)
+- **GET** `/users/me` - Lấy thông tin người dùng hiện tại từ token JWT (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/me`
   Response: UserDto object (định dạng như trên)
 
-- **POST** `/api/users` - Tạo người dùng mới (chủ yếu sử dụng bởi AuthService)
+- **GET** `/users/email/{email}` - Lấy thông tin người dùng theo email (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/email/{email}`
+  Response: UserDto object (định dạng như trên)
+
+- **POST** `/users` - Tạo người dùng mới (chủ yếu sử dụng bởi AuthService)
+  - API Gateway URL: `http://localhost:8080/users`
   Request Body:
   ```json
   {
@@ -86,7 +94,8 @@ userservice/
   ```
   Response: UserDto object đã tạo (định dạng như trên)
 
-- **PUT** `/api/users/{id}` - Cập nhật thông tin người dùng (yêu cầu JWT)
+- **PUT** `/users/{id}` - Cập nhật thông tin người dùng (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/{id}`
   Request Body:
   ```json
   {
@@ -102,7 +111,8 @@ userservice/
   Lưu ý: Không thể cập nhật email và password qua endpoint này
   Response: UserDto object đã cập nhật (định dạng như trên)
 
-- **PUT** `/api/users/{id}/security` - Hướng dẫn về thay đổi thông tin bảo mật (yêu cầu JWT)
+- **PUT** `/users/{id}/security` - Hướng dẫn về thay đổi thông tin bảo mật (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/{id}/security`
   Response:
   ```json
   {
@@ -111,7 +121,8 @@ userservice/
   }
   ```
 
-- **DELETE** `/api/users/{id}` - Xóa người dùng (yêu cầu JWT)
+- **DELETE** `/users/{id}` - Xóa người dùng (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/users/{id}`
   Response: HTTP 204 No Content
 
 ## Cài đặt và Chạy
@@ -149,7 +160,7 @@ cd userservice
 2. Cấu hình database trong `src/main/resources/application.properties`
 ```properties
 # Server Configuration
-server.port=8081
+server.port=8006
 
 # Database Configuration
 spring.datasource.url=jdbc:mysql://localhost:3307/user_db
@@ -173,7 +184,56 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-Ứng dụng sẽ chạy mặc định trên port 8081.
+Ứng dụng sẽ chạy mặc định trên port 8006.
+
+## Kiểm thử API với Postman
+
+### Collection Setup
+
+1. Tạo một collection mới trong Postman với tên "User Service API"
+2. Đặt biến môi trường:
+   - `base_url`: http://localhost:8080
+   - `token`: <JWT token từ quá trình đăng nhập>
+
+### Test Cases
+
+1. **Đăng nhập để lấy token**
+   - Method: POST
+   - URL: {{base_url}}/auth/login
+   - Headers: Content-Type: application/json
+   - Body:
+     ```json
+     {
+       "email": "user@example.com",
+       "password": "password123"
+     }
+     ```
+   - Script (để lưu token):
+     ```javascript
+     pm.environment.set("token", pm.response.json().accessToken);
+     ```
+
+2. **Lấy Thông Tin Người Dùng Hiện Tại**
+   - Method: GET
+   - URL: {{base_url}}/users/me
+   - Headers: Authorization: Bearer {{token}}
+   - Expected: 200 OK với thông tin người dùng
+
+3. **Cập Nhật Thông Tin Người Dùng**
+   - Method: PUT
+   - URL: {{base_url}}/users/1
+   - Headers: 
+     - Content-Type: application/json
+     - Authorization: Bearer {{token}}
+   - Body:
+     ```json
+     {
+       "fullName": "Updated Name",
+       "height": 175,
+       "weight": 70
+     }
+     ```
+   - Expected: 200 OK với thông tin người dùng đã cập nhật
 
 ## Tính năng
 - Quản lý thông tin cá nhân người dùng

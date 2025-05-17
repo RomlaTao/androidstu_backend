@@ -28,7 +28,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/**").permitAll() // Cho phép truy cập API người dùng (hiện tại để public cho development)
+                .requestMatchers("/users/**").permitAll() // Cho phép truy cập API người dùng (hiện tại để public cho development)
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép truy cập Swagger UI
                 .anyRequest().authenticated()
             );

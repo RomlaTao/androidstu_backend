@@ -32,6 +32,7 @@ authservice/
 
 ### Authentication
 - **POST** `/auth/signup` - Đăng ký người dùng mới
+  - API Gateway URL: `http://localhost:8080/auth/signup`
   ```json
   {
     "fullName": "string",
@@ -51,6 +52,7 @@ authservice/
   ```
 
 - **POST** `/auth/login` - Đăng nhập
+  - API Gateway URL: `http://localhost:8080/auth/login`
   ```json
   {
     "email": "string",
@@ -60,12 +62,14 @@ authservice/
   Response:
   ```json
   {
-    "token": "string",
+    "accessToken": "string",
+    "tokenType": "Bearer",
     "expiresIn": "number"
   }
   ```
 
 - **POST** `/auth/change-password` - Đổi mật khẩu (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/auth/change-password`
   ```json
   {
     "currentPassword": "string",
@@ -76,12 +80,13 @@ authservice/
   ```json
   {
     "message": "Password changed successfully",
-    "token": "string", 
+    "accessToken": "string", 
     "expiresIn": "number"
   }
   ```
 
 - **POST** `/auth/logout` - Đăng xuất (yêu cầu JWT)
+  - API Gateway URL: `http://localhost:8080/auth/logout`
   Response:
   ```json
   {
@@ -90,8 +95,8 @@ authservice/
   ```
 
 ### Users
-- **GET** `/users/me` - Lấy thông tin người dùng hiện tại (yêu cầu JWT)
-- **GET** `/users/` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
+- **GET** `/auth/users/me` - Lấy thông tin người dùng hiện tại (yêu cầu JWT)
+- **GET** `/auth/users/` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
 
 ## Cài đặt và Chạy
 
@@ -140,20 +145,31 @@ cd authservice
 
 2. Cấu hình database trong `src/main/resources/application.properties`
 ```properties
+# Server Configuration
+server.port=8005
+
 # Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3306/auth_db
+spring.datasource.url=jdbc:mysql://localhost:3307/auth_db
 spring.datasource.username=root
-spring.datasource.password=yourpassword
+spring.datasource.password=secret
+
+# Hibernate properties
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # JWT Configuration
-security.jwt.secret-key=your_secret_key_base64_encoded
-security.jwt.expiration-time=86400000  # 24 hours in milliseconds
+security.jwt.secret-key=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+# 1h in millisecond
+security.jwt.expiration-time=3600000
 
 # Redis Configuration (cho JWT blacklist)
 spring.redis.host=localhost
 spring.redis.port=6379
+
+# Eureka Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.instance.prefer-ip-address=true
 ```
 
 3. Build project
@@ -166,7 +182,70 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-Ứng dụng sẽ chạy mặc định trên port 8080.
+Ứng dụng sẽ chạy trên port 8005.
+
+## Thử nghiệm với Postman
+
+### Collection Setup
+
+1. Tạo một collection mới trong Postman với tên "Auth Service API"
+2. Đặt biến môi trường:
+   - `base_url`: http://localhost:8080
+   - `token`: <JWT token từ quá trình đăng nhập>
+
+### Test Cases
+
+1. **Đăng Ký Người Dùng**
+   - Method: POST
+   - URL: {{base_url}}/auth/signup
+   - Headers: Content-Type: application/json
+   - Body:
+     ```json
+     {
+       "fullName": "Test User",
+       "email": "test@example.com",
+       "password": "password123"
+     }
+     ```
+   - Expected: 201 Created với thông tin người dùng
+
+2. **Đăng Nhập**
+   - Method: POST
+   - URL: {{base_url}}/auth/login
+   - Headers: Content-Type: application/json
+   - Body:
+     ```json
+     {
+       "email": "test@example.com",
+       "password": "password123"
+     }
+     ```
+   - Script (để lưu token):
+     ```javascript
+     pm.environment.set("token", pm.response.json().accessToken);
+     ```
+   - Expected: 200 OK với JWT token
+
+3. **Đổi Mật Khẩu**
+   - Method: POST
+   - URL: {{base_url}}/auth/change-password
+   - Headers: 
+     - Content-Type: application/json
+     - Authorization: Bearer {{token}}
+   - Body:
+     ```json
+     {
+       "currentPassword": "password123",
+       "newPassword": "newpassword123"
+     }
+     ```
+   - Expected: 200 OK với thông báo thành công và token mới
+
+4. **Đăng Xuất**
+   - Method: POST
+   - URL: {{base_url}}/auth/logout
+   - Headers: Authorization: Bearer {{token}}
+   - Expected: 200 OK với thông báo thành công
 
 ## Tính năng
 - Đăng ký và đăng nhập người dùng
