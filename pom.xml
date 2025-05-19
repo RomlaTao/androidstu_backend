@@ -12,11 +12,12 @@
     <description>Microservices for Health Application</description>
 
     <modules>
+        <module>discoveryserver</module>
+        <module>apiservice</module>
         <module>authservice</module>
         <module>userservice</module>
         <module>workoutservice</module>
-        <module>apiservice</module>
-        <module>discoveryserver</module>
+        <module>mealservice</module>
     </modules>
 
     <properties>

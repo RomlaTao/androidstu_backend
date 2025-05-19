@@ -24,7 +24,7 @@ public class UserServiceClient {
     }
 
     public Map<String, Object> createUser(RegisterUserDto registerUserDto) {
-        String url = userServiceUrl + "/api/users";
+        String url = userServiceUrl + "/users";
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

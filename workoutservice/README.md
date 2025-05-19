@@ -301,7 +301,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
      ```json
      {
        "name": "Push-ups",
-       "description": "Basic upper body exercise",
+       "description": "Basic upper body food",
        "type": "STRENGTH",
        "caloriesBurned": 100,
        "durationMinutes": 10,

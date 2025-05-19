@@ -1,0 +1,27 @@
+package com.example.mealservice.repositories;
+
+import com.example.mealservice.entities.ScheduledMeal;
+import com.example.mealservice.entities.MealStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface ScheduledMealRepository extends JpaRepository<ScheduledMeal, Long> {
+    List<ScheduledMeal> findByScheduleId(Long scheduleId);
+    
+    List<ScheduledMeal> findByStatus(MealStatus status);
+    
+    @Query("SELECT sw FROM ScheduledMeal sw JOIN sw.schedule s WHERE s.userId = :userId AND " +
+           "sw.scheduledDateTime BETWEEN :startDateTime AND :endDateTime ORDER BY sw.scheduledDateTime ASC")
+    List<ScheduledMeal> findUserMealsInDateRange(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime);
+    
+    @Query("SELECT sw FROM ScheduledMeal sw JOIN sw.schedule s WHERE s.userId = :userId AND " +
+           "sw.status = :status AND sw.scheduledDateTime BETWEEN :startDateTime AND :endDateTime " +
+           "ORDER BY sw.scheduledDateTime ASC")
+    List<ScheduledMeal> findUserMealsInDateRangeWithStatus(Long userId, MealStatus status,
+                                                             LocalDateTime startDateTime, LocalDateTime endDateTime);
+} 

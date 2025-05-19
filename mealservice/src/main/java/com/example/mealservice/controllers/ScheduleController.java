@@ -1,7 +1,7 @@
-package com.example.workoutservice.controllers;
+package com.example.mealservice.controllers;
 
-import com.example.workoutservice.dtos.ScheduleDTO;
-import com.example.workoutservice.services.ScheduleService;
+import com.example.mealservice.dtos.ScheduleDTO;
+import com.example.mealservice.services.ScheduleService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/workouts/schedules")
+@RequestMapping("/meals/schedules")
 public class ScheduleController {
 
     private final ScheduleService scheduleService;

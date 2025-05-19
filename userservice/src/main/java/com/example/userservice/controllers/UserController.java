@@ -45,18 +45,6 @@ public class UserController {
     }
 
     /**
-     * Endpoint này chủ yếu được sử dụng bởi AuthService, không phải cho người dùng cuối
-     */
-    @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
-        try {
-            return new ResponseEntity<>(userService.createUser(userDto), HttpStatus.CREATED);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
-    }
-
-    /**
      * Cập nhật thông tin người dùng
      * Lưu ý: Email và password không thể được cập nhật thông qua endpoint này
      */
@@ -71,23 +59,6 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-    }
-
-    /**
-     * Xử lý yêu cầu thay đổi email hoặc password
-     */
-    @PutMapping("/{id}/security")
-    public ResponseEntity<Map<String, String>> updateSecurityInfo(@PathVariable Integer id) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Để thay đổi email hoặc mật khẩu, vui lòng sử dụng AuthService");
-        response.put("authServiceEndpoint", "/auth/change-password");
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 
     /**
