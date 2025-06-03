@@ -1,5 +1,6 @@
 package com.example.workoutservice.entities;
 
+import com.example.workoutservice.enums.WorkoutStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;

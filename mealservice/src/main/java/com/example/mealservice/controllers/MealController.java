@@ -1,7 +1,7 @@
 package com.example.mealservice.controllers;
 
 import com.example.mealservice.dtos.MealDTO;
-import com.example.mealservice.entities.MealType;
+import com.example.mealservice.enums.MealType;
 import com.example.mealservice.services.MealService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -31,22 +31,16 @@ public class MealController {
         MealDTO meal = mealService.getMealById(id);
         return ResponseEntity.ok(meal);
     }
-    
+    //giới hạn quyền
     @GetMapping
     public ResponseEntity<List<MealDTO>> getAllMeals() {
         List<MealDTO> meals = mealService.getAllMeals();
         return ResponseEntity.ok(meals);
     }
-    
+
     @GetMapping("/type/{type}")
     public ResponseEntity<List<MealDTO>> getMealsByType(@PathVariable MealType type) {
         List<MealDTO> meals = mealService.getMealsByType(type);
-        return ResponseEntity.ok(meals);
-    }
-    
-    @GetMapping("/search")
-    public ResponseEntity<List<MealDTO>> searchMealsByName(@RequestParam String name) {
-        List<MealDTO> meals = mealService.searchMealsByName(name);
         return ResponseEntity.ok(meals);
     }
     
@@ -62,4 +56,4 @@ public class MealController {
         mealService.deleteMeal(id);
         return ResponseEntity.noContent().build();
     }
-} 
+}

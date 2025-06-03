@@ -11,14 +11,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
-    private Integer id;
+    @Column(name = "id", nullable = false, length = 36)
+    private String id;
 
     @Column(nullable = false)
     private String fullName;
@@ -63,9 +63,49 @@ public class User implements UserDetails {
     @Column(name = "enabled")
     private boolean enabled = true;
 
+    @Column(name = "initial_activity_level")
+    @Enumerated(EnumType.STRING)
+    private InitialActivityLevel initialActivityLevel;
+
+    @Column(name = "activity_level_set_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date activityLevelSetAt;
+
+    // Constructors
+    public User() {
+        this.id = UUID.randomUUID().toString();
+    }
+
+    public User(String id) {
+        this.id = id;
+    }
+
     // Enum for Gender
     public enum Gender {
         MALE, FEMALE, OTHER
+    }
+
+    // Enum for Initial Activity Level
+    public enum InitialActivityLevel {
+        SEDENTARY(1.2, "Sedentary", "Little or no exercise"),
+        LIGHTLY_ACTIVE(1.375, "Lightly Active", "Light exercise/sports 1-3 days/week"),
+        MODERATELY_ACTIVE(1.55, "Moderately Active", "Moderate exercise/sports 3-5 days/week"),
+        VERY_ACTIVE(1.725, "Very Active", "Hard exercise/sports 6-7 days a week"),
+        EXTRA_ACTIVE(1.9, "Extra Active", "Very hard exercise/sports & physical job or 2x training");
+
+        private final double factor;
+        private final String displayName;
+        private final String description;
+
+        InitialActivityLevel(double factor, String displayName, String description) {
+            this.factor = factor;
+            this.displayName = displayName;
+            this.description = description;
+        }
+
+        public double getFactor() { return factor; }
+        public String getDisplayName() { return displayName; }
+        public String getDescription() { return description; }
     }
 
     // UserDetails implementation
@@ -101,11 +141,11 @@ public class User implements UserDetails {
     }
 
     // Getters and Setters
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -196,5 +236,22 @@ public class User implements UserDetails {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public InitialActivityLevel getInitialActivityLevel() {
+        return initialActivityLevel;
+    }
+
+    public void setInitialActivityLevel(InitialActivityLevel initialActivityLevel) {
+        this.initialActivityLevel = initialActivityLevel;
+        this.activityLevelSetAt = new Date(); // Tự động set thời gian
+    }
+
+    public Date getActivityLevelSetAt() {
+        return activityLevelSetAt;
+    }
+
+    public void setActivityLevelSetAt(Date activityLevelSetAt) {
+        this.activityLevelSetAt = activityLevelSetAt;
     }
 } 

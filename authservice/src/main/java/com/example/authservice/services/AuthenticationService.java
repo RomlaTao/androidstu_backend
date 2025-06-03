@@ -41,13 +41,13 @@ public class AuthenticationService {
 
         User savedUser = userRepository.save(user);
         
-        // 2. Gọi user service để lưu thông tin chi tiết của người dùng
+        // 2. Đồng bộ user với ID cụ thể sang UserService để đảm bảo ID giống nhau
         try {
-            userServiceClient.createUser(input);
+            userServiceClient.syncUserWithId(savedUser.getId(), input);
         } catch (Exception e) {
             // Xử lý lỗi khi gọi UserService
             // Trong trường hợp lỗi, có thể rollback giao dịch hoặc xử lý theo cách khác
-            throw new RuntimeException("Failed to register user in UserService: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to sync user to UserService: " + e.getMessage(), e);
         }
 
         return savedUser;
@@ -95,5 +95,35 @@ public class AuthenticationService {
         
         // Lưu vào database
         return userRepository.save(user);
+    }
+
+    /**
+     * Đánh dấu user đã hoàn thành khởi tạo thông tin cá nhân
+     * @param userId ID của user cần cập nhật
+     * @return User sau khi đã cập nhật
+     * @throws IllegalArgumentException nếu không tìm thấy người dùng
+     */
+    @Transactional
+    public User completeUserInfo(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với ID: " + userId));
+        
+        // Đánh dấu đã hoàn thành khởi tạo thông tin
+        user.setIsUserInfoInitialized(true);
+        
+        // Lưu vào database
+        return userRepository.save(user);
+    }
+
+    /**
+     * Lấy thông tin user theo ID
+     * @param userId ID của user cần lấy thông tin
+     * @return User
+     * @throws IllegalArgumentException nếu không tìm thấy người dùng
+     */
+    @Transactional(readOnly = true)
+    public User getUserById(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với ID: " + userId));
     }
 }

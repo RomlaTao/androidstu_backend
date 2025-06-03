@@ -34,7 +34,19 @@ public class RouteConfig {
                         .path("/workouts/**")
                         .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
                         .uri("lb://WORKOUTSERVICE"))
-                
+
+                // Meal Service Routes (with JWT filter)
+                .route("meal-service", r -> r
+                        .path("/meals/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://MEALSERVICE"))
+
+                // Analyst Service Routes (with JWT filter)
+                .route("analyst-service", r -> r
+                        .path("/analytics/**")
+                        .filters(f -> f.filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                        .uri("lb://ANALYSTSERVICE"))
+
                 .build();
     }
 }

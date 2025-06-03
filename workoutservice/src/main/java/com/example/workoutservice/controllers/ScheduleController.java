@@ -32,16 +32,18 @@ public class ScheduleController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ScheduleDTO>> getSchedulesByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(scheduleService.getSchedulesByUserId(userId));
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByUserId(@PathVariable String userId) {
+        List<ScheduleDTO> schedules = scheduleService.getSchedulesByUserId(userId);
+        return ResponseEntity.ok(schedules);
     }
 
     @GetMapping("/user/{userId}/date-range")
     public ResponseEntity<List<ScheduleDTO>> getSchedulesInDateRange(
-            @PathVariable Long userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(scheduleService.getSchedulesInDateRange(userId, startDate, endDate));
+            @PathVariable String userId,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+        List<ScheduleDTO> schedules = scheduleService.getSchedulesInDateRange(userId, startDate, endDate);
+        return ResponseEntity.ok(schedules);
     }
 
     @PutMapping("/{id}")

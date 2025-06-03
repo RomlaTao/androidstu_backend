@@ -72,8 +72,9 @@ authservice/
   - API Gateway URL: `http://localhost:8080/auth/change-password`
   ```json
   {
-    "currentPassword": "string",
-    "newPassword": "string"
+    "email": "nguyenvana@example.com",
+    "currentPassword": "NewPassword456",
+    "newPassword": "Password123"
   }
   ```
   Response:
@@ -110,7 +111,7 @@ authservice/
 
 1. Tạo container MySQL
 ```bash
-docker run --name mysql-auth -e MYSQL_ROOT_PASSWORD=yourpassword -e MYSQL_DATABASE=auth_db -p 3306:3306 -d mysql:8.0
+docker run --name auth-db -e MYSQL_ROOT_PASSWORD=yourpassword -e MYSQL_DATABASE=auth_db -p 3306:3306 -d mysql:8.0
 ```
 
 2. Kiểm tra container đã chạy

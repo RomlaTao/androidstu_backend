@@ -7,19 +7,12 @@ import jakarta.validation.constraints.*;
 import java.util.Date;
 
 public class UserDto {
-    private Integer id;
-    
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
+    private String id;
+
     private String fullName;
-    
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
+
     private String email;
-    
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$", 
-             message = "Password must be at least 8 characters and contain at least one letter and one number")
+
     private String password;
     
     private User.Gender gender;
@@ -35,6 +28,10 @@ public class UserDto {
     @DecimalMax(value = "300.0", message = "Height must be less than 300 cm")
     private Double height;
     
+    private User.InitialActivityLevel initialActivityLevel;
+
+    private Date activityLevelSetAt;
+
     private Date createdAt;
     private Date updatedAt;
 
@@ -42,11 +39,11 @@ public class UserDto {
     public UserDto() {}
 
     // Getters and Setters
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -104,6 +101,22 @@ public class UserDto {
 
     public void setHeight(Double height) {
         this.height = height;
+    }
+
+    public User.InitialActivityLevel getInitialActivityLevel() {
+        return initialActivityLevel;
+    }
+
+    public void setInitialActivityLevel(User.InitialActivityLevel initialActivityLevel) {
+        this.initialActivityLevel = initialActivityLevel;
+    }
+
+    public Date getActivityLevelSetAt() {
+        return activityLevelSetAt;
+    }
+
+    public void setActivityLevelSetAt(Date activityLevelSetAt) {
+        this.activityLevelSetAt = activityLevelSetAt;
     }
 
     public Date getCreatedAt() {

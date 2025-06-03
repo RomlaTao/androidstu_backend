@@ -4,7 +4,7 @@ import com.example.workoutservice.dtos.ScheduledWorkoutDTO;
 import com.example.workoutservice.exceptions.ResourceNotFoundException;
 import com.example.workoutservice.mappers.ScheduledWorkoutMapper;
 import com.example.workoutservice.entities.ScheduledWorkout;
-import com.example.workoutservice.entities.WorkoutStatus;
+import com.example.workoutservice.enums.WorkoutStatus;
 import com.example.workoutservice.repositories.ScheduleRepository;
 import com.example.workoutservice.repositories.ScheduledWorkoutRepository;
 import com.example.workoutservice.repositories.WorkoutRepository;
@@ -87,7 +87,7 @@ public class ScheduledWorkoutServiceImpl implements ScheduledWorkoutService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledWorkoutDTO> getUserWorkoutsInDateRange(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public List<ScheduledWorkoutDTO> getUserWorkoutsInDateRange(String userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         List<ScheduledWorkout> scheduledWorkouts = scheduledWorkoutRepository.findUserWorkoutsInDateRange(
                 userId, startDateTime, endDateTime);
         return scheduledWorkoutMapper.toDTOList(scheduledWorkouts);
@@ -95,7 +95,7 @@ public class ScheduledWorkoutServiceImpl implements ScheduledWorkoutService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledWorkoutDTO> getUserWorkoutsInDateRangeWithStatus(Long userId, WorkoutStatus status,
+    public List<ScheduledWorkoutDTO> getUserWorkoutsInDateRangeWithStatus(String userId, WorkoutStatus status,
                                                           LocalDateTime startDateTime, LocalDateTime endDateTime) {
         List<ScheduledWorkout> scheduledWorkouts = scheduledWorkoutRepository.findUserWorkoutsInDateRangeWithStatus(
                 userId, status, startDateTime, endDateTime);

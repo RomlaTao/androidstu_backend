@@ -1,5 +1,6 @@
 package com.example.userservice.services;
 
+import com.example.userservice.clients.AuthServiceClient;
 import com.example.userservice.dtos.UserDto;
 import com.example.userservice.entities.User;
 import com.example.userservice.repositories.UserRepository;
@@ -19,10 +20,12 @@ public class UserService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthServiceClient authServiceClient;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthServiceClient authServiceClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authServiceClient = authServiceClient;
     }
 
     /**
@@ -41,7 +44,7 @@ public class UserService {
      * @param id ID của user cần tìm
      * @return UserDto nếu tìm thấy
      */
-    public UserDto getUserById(Integer id) {
+    public UserDto getUserById(String id) {
         logger.debug("Fetching user with id: {}", id);
         return userRepository.findById(id)
                 .map(this::convertToDto)
@@ -89,7 +92,16 @@ public class UserService {
         }
         
         // Tạo mới nếu chưa tồn tại
-        User user = convertToEntity(userDto);
+        User user;
+        if (userDto.getId() != null) {
+            // Nếu AuthService đã tạo ID, sử dụng ID đó
+            user = new User(userDto.getId());
+            BeanUtils.copyProperties(userDto, user, "id");
+        } else {
+            // Nếu không có ID, tạo UUID mới
+            user = new User();
+            BeanUtils.copyProperties(userDto, user, "id");
+        }
         
         // Khi được gọi từ AuthService, password sẽ là null
         // Vì password đã được xử lý và lưu trong AuthService
@@ -108,6 +120,38 @@ public class UserService {
     }
 
     /**
+     * Đồng bộ user với ID cụ thể từ service khác
+     * @param id ID cụ thể cần sử dụng
+     * @param userDto Thông tin user
+     * @return UserDto của user đã tạo
+     */
+    @Transactional
+    public UserDto syncUserWithId(String id, UserDto userDto) {
+        logger.debug("Syncing user with specific id: {}", id);
+        
+        // Kiểm tra xem user với ID này đã tồn tại chưa
+        if (userRepository.existsById(id)) {
+            logger.info("User with id {} already exists, updating instead", id);
+            return updateUser(id, userDto);
+        }
+        
+        // Tạo user với ID cụ thể
+        User user = new User(id);
+        BeanUtils.copyProperties(userDto, user, "id");
+        
+        if (userDto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        } else {
+            user.setPassword("NOT_USED_FOR_AUTH");
+        }
+        
+        User savedUser = userRepository.save(user);
+        logger.info("User synced successfully with id: {}", savedUser.getId());
+        
+        return convertToDto(savedUser);
+    }
+
+    /**
      * Cập nhật thông tin user
      * @param id ID của user cần cập nhật
      * @param userDto Thông tin mới
@@ -115,15 +159,15 @@ public class UserService {
      * @throws IllegalArgumentException nếu cố gắng cập nhật email hoặc password
      */
     @Transactional
-    public UserDto updateUser(Integer id, UserDto userDto) {
+    public UserDto updateUser(String id, UserDto userDto) {
         logger.debug("Updating user with id: {}", id);
-        
+
         // Không cho phép cập nhật email từ UserService
         if (userDto.getEmail() != null) {
             logger.warn("Attempt to update email is not allowed in UserService");
             throw new IllegalArgumentException("Email không thể được cập nhật từ UserService. Vui lòng liên hệ với quản trị viên.");
         }
-        
+
         // Không cho phép cập nhật password từ UserService
         if (userDto.getPassword() != null) {
             logger.warn("Attempt to update password is not allowed in UserService");
@@ -157,8 +201,46 @@ public class UserService {
             user.setHeight(userDto.getHeight());
         }
         
+        if (userDto.getInitialActivityLevel() != null) {
+            user.setInitialActivityLevel(userDto.getInitialActivityLevel());
+        }
+        
         User updatedUser = userRepository.save(user);
         logger.info("User updated successfully with id: {}", updatedUser.getId());
+        
+        // Gọi AuthService để đánh dấu user đã hoàn thành khởi tạo thông tin
+        // Điều này được gọi khi user cập nhật thông tin cá nhân lần đầu
+        try {
+            authServiceClient.markUserInfoInitialized(id);
+        } catch (Exception e) {
+            logger.warn("Failed to mark user info as initialized for user {}: {}", id, e.getMessage());
+            // Không throw exception để không ảnh hưởng đến việc cập nhật user
+        }
+        
+        return convertToDto(updatedUser);
+    }
+
+    /**
+     * Cập nhật Activity Level của user
+     * @param id ID của user cần cập nhật
+     * @param activityLevel Activity Level mới
+     * @return UserDto của user sau khi cập nhật
+     */
+    @Transactional
+    public UserDto updateUserActivityLevel(String id, User.InitialActivityLevel activityLevel) {
+        logger.debug("Updating user activity level with id: {} to level: {}", id, activityLevel);
+        
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            logger.warn("User with id {} not found", id);
+            return null;
+        }
+        
+        user.setInitialActivityLevel(activityLevel);
+        
+        User updatedUser = userRepository.save(user);
+        logger.info("User activity level updated successfully with id: {} to level: {}", 
+                   updatedUser.getId(), activityLevel);
         
         return convertToDto(updatedUser);
     }
@@ -168,7 +250,7 @@ public class UserService {
      * @param id ID của user cần xóa
      */
     @Transactional
-    public void deleteUser(Integer id) {
+    public void deleteUser(String id) {
         logger.debug("Deleting user with id: {}", id);
         userRepository.deleteById(id);
         logger.info("User deleted successfully with id: {}", id);

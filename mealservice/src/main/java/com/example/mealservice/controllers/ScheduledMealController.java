@@ -1,7 +1,7 @@
 package com.example.mealservice.controllers;
 
 import com.example.mealservice.dtos.ScheduledMealDTO;
-import com.example.mealservice.entities.MealStatus;
+import com.example.mealservice.enums.MealStatus;
 import com.example.mealservice.services.ScheduledMealService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,25 +35,27 @@ public class ScheduledMealController {
     public ResponseEntity<ScheduledMealDTO> getScheduledMealById(@PathVariable Long id) {
         return ResponseEntity.ok(scheduledMealService.getScheduledMealById(id));
     }
-    
+
+    //lấy tất cả scheduled đã lên thuộc schedules
     @GetMapping("/schedule/{scheduleId}")
     public ResponseEntity<List<ScheduledMealDTO>> getScheduledMealsByScheduleId(@PathVariable Long scheduleId) {
         return ResponseEntity.ok(scheduledMealService.getScheduledMealsByScheduleId(scheduleId));
     }
-    
+    //gioi han
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ScheduledMealDTO>> getUserMealsInDateRange(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {
         return ResponseEntity.ok(
             scheduledMealService.getUserMealsInDateRange(userId, startDateTime, endDateTime)
         );
     }
-    
+
+    //bo
     @GetMapping("/user/{userId}/status/{status}")
     public ResponseEntity<List<ScheduledMealDTO>> getUserMealsInDateRangeWithStatus(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @PathVariable MealStatus status,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {
@@ -70,7 +72,7 @@ public class ScheduledMealController {
             @Valid @RequestBody ScheduledMealDTO scheduledMealDTO) {
         return ResponseEntity.ok(scheduledMealService.updateScheduledMeal(id, scheduledMealDTO));
     }
-    
+
     @PatchMapping("/{id}/status/{status}")
     public ResponseEntity<ScheduledMealDTO> updateMealStatus(
             @PathVariable Long id,

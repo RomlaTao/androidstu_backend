@@ -1,7 +1,7 @@
 package com.example.mealservice.repositories;
 
 import com.example.mealservice.entities.Meal;
-import com.example.mealservice.entities.MealType;
+import com.example.mealservice.enums.MealType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

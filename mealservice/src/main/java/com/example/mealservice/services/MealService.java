@@ -1,7 +1,7 @@
 package com.example.mealservice.services;
 
 import com.example.mealservice.dtos.MealDTO;
-import com.example.mealservice.entities.MealType;
+import com.example.mealservice.enums.MealType;
 
 import java.util.List;
 

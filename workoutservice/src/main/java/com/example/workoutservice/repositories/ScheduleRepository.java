@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
-    List<Schedule> findByUserId(Long userId);
-    List<Schedule> findByUserIdAndStartDateGreaterThanEqual(Long userId, LocalDate date);
-    List<Schedule> findByUserIdAndEndDateGreaterThanEqualAndStartDateLessThanEqual(Long userId, LocalDate startDate, LocalDate endDate);
+    List<Schedule> findByUserId(String userId);
+    List<Schedule> findByUserIdAndStartDateGreaterThanEqual(String userId, LocalDate date);
+    List<Schedule> findByUserIdAndEndDateGreaterThanEqualAndStartDateLessThanEqual(String userId, LocalDate startDate, LocalDate endDate);
 } 

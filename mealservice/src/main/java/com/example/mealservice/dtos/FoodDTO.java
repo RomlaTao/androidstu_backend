@@ -12,14 +12,8 @@ public class FoodDTO {
     
     private String description;
     
-    @Min(value = 0, message = "Carb must be a non-negative number")
-    private Integer carb;
-    
-    @Min(value = 0, message = "Protein must be a non-negative number")
-    private Integer protein;
-    
-    @Min(value = 0, message = "Lipid must be a non-negative number")
-    private Integer lipid;
+    @Min(value = 0, message = "Calories must be a non-negative number")
+    private Integer calories;
     
     public FoodDTO() {
     }
@@ -48,27 +42,11 @@ public class FoodDTO {
         this.description = description;
     }
     
-    public Integer getCarb() {
-        return carb;
+    public Integer getCalories() {
+        return calories;
     }
     
-    public void setCarb(Integer carb) {
-        this.carb = carb;
-    }
-    
-    public Integer getProtein() {
-        return protein;
-    }
-    
-    public void setProtein(Integer protein) {
-        this.protein = protein;
-    }
-    
-    public Integer getLipid() {
-        return lipid;
-    }
-    
-    public void setLipid(Integer lipid) {
-        this.lipid = lipid;
+    public void setCalories(Integer calories) {
+        this.calories = calories;
     }
 } 

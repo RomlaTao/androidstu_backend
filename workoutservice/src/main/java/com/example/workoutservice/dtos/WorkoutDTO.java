@@ -1,6 +1,6 @@
 package com.example.workoutservice.dtos;
 
-import com.example.workoutservice.entities.WorkoutType;
+import com.example.workoutservice.enums.WorkoutType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

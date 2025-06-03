@@ -31,14 +31,15 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getScheduleById(id));
     }
 
+    //giới hạn
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ScheduleDTO>> getSchedulesByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByUserId(@PathVariable String userId) {
         return ResponseEntity.ok(scheduleService.getSchedulesByUserId(userId));
     }
-
+    //bỏ
     @GetMapping("/user/{userId}/date-range")
     public ResponseEntity<List<ScheduleDTO>> getSchedulesInDateRange(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(scheduleService.getSchedulesInDateRange(userId, startDate, endDate));

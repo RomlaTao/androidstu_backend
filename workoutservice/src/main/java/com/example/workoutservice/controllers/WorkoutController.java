@@ -1,7 +1,7 @@
 package com.example.workoutservice.controllers;
 
 import com.example.workoutservice.dtos.WorkoutDTO;
-import com.example.workoutservice.entities.WorkoutType;
+import com.example.workoutservice.enums.WorkoutType;
 import com.example.workoutservice.services.WorkoutService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

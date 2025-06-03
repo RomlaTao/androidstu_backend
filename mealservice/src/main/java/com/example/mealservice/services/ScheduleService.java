@@ -11,9 +11,9 @@ public interface ScheduleService {
     
     ScheduleDTO getScheduleById(Long id);
     
-    List<ScheduleDTO> getSchedulesByUserId(Long userId);
+    List<ScheduleDTO> getSchedulesByUserId(String userId);
     
-    List<ScheduleDTO> getSchedulesInDateRange(Long userId, LocalDate startDate, LocalDate endDate);
+    List<ScheduleDTO> getSchedulesInDateRange(String userId, LocalDate startDate, LocalDate endDate);
     
     ScheduleDTO updateSchedule(Long id, ScheduleDTO scheduleDTO);
     

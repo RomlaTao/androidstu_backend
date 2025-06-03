@@ -1,6 +1,6 @@
 package com.example.workoutservice.dtos;
 
-import com.example.workoutservice.entities.WorkoutStatus;
+import com.example.workoutservice.enums.WorkoutStatus;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 

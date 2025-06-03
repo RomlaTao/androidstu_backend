@@ -1,8 +1,9 @@
 package com.example.mealservice.entities;
 
+import com.example.mealservice.enums.MealType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,14 +21,8 @@ public class Meal {
     
     private String description;
     
-    @NotNull
-    private Integer carb;
-    
-    @NotNull
-    private Integer protein;
-    
-    @NotNull
-    private Integer lipid;
+    @Min(value = 0, message = "Calories must be a non-negative number")
+    private Integer calories;
     
     @Enumerated(EnumType.STRING)
     private MealType type;
@@ -62,28 +57,12 @@ public class Meal {
         this.description = description;
     }
     
-    public Integer getCarb() {
-        return carb;
+    public Integer getCalories() {
+        return calories;
     }
     
-    public void setCarb(Integer carb) {
-        this.carb = carb;
-    }
-    
-    public Integer getProtein() {
-        return protein;
-    }
-    
-    public void setProtein(Integer protein) {
-        this.protein = protein;
-    }
-    
-    public Integer getLipid() {
-        return lipid;
-    }
-    
-    public void setLipid(Integer lipid) {
-        this.lipid = lipid;
+    public void setCalories(Integer calories) {
+        this.calories = calories;
     }
     
     public MealType getType() {
@@ -105,10 +84,37 @@ public class Meal {
     public void addFood(Food food) {
         foods.add(food);
         food.setMeal(this);
+        updateCaloriesFromFoods();
     }
     
     public void removeFood(Food food) {
         foods.remove(food);
         food.setMeal(null);
+        updateCaloriesFromFoods();
+    }
+    
+    /**
+     * Tự động cập nhật calories của meal dựa trên tổng calories của foods
+     */
+    public void updateCaloriesFromFoods() {
+        this.calories = foods.stream()
+                .mapToInt(food -> food.getCalories() != null ? food.getCalories() : 0)
+                .sum();
+    }
+    
+    /**
+     * Validate rằng calories của meal phải bằng tổng calories của foods
+     */
+    public boolean isCaloriesConsistent() {
+        int calculatedCalories = foods.stream()
+                .mapToInt(food -> food.getCalories() != null ? food.getCalories() : 0)
+                .sum();
+        return this.calories != null && this.calories.equals(calculatedCalories);
+    }
+    
+    @PrePersist
+    @PreUpdate
+    public void validateAndUpdateCalories() {
+        updateCaloriesFromFoods();
     }
 }

@@ -31,16 +31,27 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<Map<String, Object>> register(@RequestBody RegisterUserDto registerUserDto) {
         User registeredUser = authenticationService.signup(registerUserDto);
-        return ResponseEntity.ok(registeredUser);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Đăng ký tài khoản thành công");
+        response.put("userId", registeredUser.getId());
+        response.put("email", registeredUser.getEmail());
+        response.put("fullName", registeredUser.getFullName());
+        
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
         String jwtToken = jwtService.generateToken(authenticatedUser);
-        LoginResponse loginResponse = new LoginResponse().setToken(jwtToken).setExpiresIn(jwtService.getExpirationTime());
+        LoginResponse loginResponse = new LoginResponse()
+                .setToken(jwtToken)
+                .setExpiresIn(jwtService.getExpirationTime())
+                .setUserId(authenticatedUser.getId())
+                .setIsUserInfoInitialized(authenticatedUser.getIsUserInfoInitialized());
         return ResponseEntity.ok(loginResponse);
     }
     
@@ -96,5 +107,28 @@ public class AuthenticationController {
         }
         
         return ResponseEntity.badRequest().body(Map.of("error", "Không tìm thấy token"));
+    }
+
+    /**
+     * Internal endpoint for UserService to update user info initialization status
+     * Called when user completes profile update in UserService
+     */
+    @PutMapping("/internal/mark-user-info-initialized/{userId}")
+    public ResponseEntity<?> markUserInfoInitialized(@PathVariable String userId) {
+        try {
+            User user = authenticationService.completeUserInfo(userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", user.getId());
+            response.put("isUserInfoInitialized", user.getIsUserInfoInitialized());
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Đã xảy ra lỗi: " + e.getMessage()));
+        }
     }
 }

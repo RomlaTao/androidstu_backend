@@ -1,6 +1,6 @@
 package com.example.mealservice.dtos;
 
-import com.example.mealservice.entities.MealStatus;
+import com.example.mealservice.enums.MealStatus;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;

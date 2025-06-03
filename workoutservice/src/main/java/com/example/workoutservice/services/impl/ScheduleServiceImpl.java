@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
@@ -40,15 +41,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<ScheduleDTO> getSchedulesByUserId(Long userId) {
+    public List<ScheduleDTO> getSchedulesByUserId(String userId) {
         List<Schedule> schedules = scheduleRepository.findByUserId(userId);
         return scheduleMapper.toDTOList(schedules);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<ScheduleDTO> getSchedulesInDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
+    public List<ScheduleDTO> getSchedulesInDateRange(String userId, LocalDate startDate, LocalDate endDate) {
         List<Schedule> schedules = scheduleRepository.findByUserIdAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
                 userId, startDate, endDate);
         return scheduleMapper.toDTOList(schedules);

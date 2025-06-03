@@ -1,5 +1,6 @@
 package com.example.mealservice.entities;
 
+import com.example.mealservice.enums.MealStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 

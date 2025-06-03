@@ -9,7 +9,7 @@ public class ScheduleDTO {
     private Long id;
     
     @NotNull(message = "User ID is required")
-    private Long userId;
+    private String userId;
     
     @NotNull(message = "Schedule name is required")
     private String name;
@@ -34,11 +34,11 @@ public class ScheduleDTO {
         this.id = id;
     }
     
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
     
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
     

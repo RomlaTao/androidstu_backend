@@ -2,7 +2,7 @@ package com.example.mealservice.services.impl;
 
 import com.example.mealservice.dtos.ScheduledMealDTO;
 import com.example.mealservice.entities.ScheduledMeal;
-import com.example.mealservice.entities.MealStatus;
+import com.example.mealservice.enums.MealStatus;
 import com.example.mealservice.exceptions.ResourceNotFoundException;
 import com.example.mealservice.mappers.ScheduledMealMapper;
 import com.example.mealservice.repositories.ScheduleRepository;
@@ -87,7 +87,7 @@ public class ScheduledMealServiceImpl implements ScheduledMealService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledMealDTO> getUserMealsInDateRange(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public List<ScheduledMealDTO> getUserMealsInDateRange(String userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         List<ScheduledMeal> scheduledMeals = scheduledMealRepository.findUserMealsInDateRange(
                 userId, startDateTime, endDateTime);
         return scheduledMealMapper.toDTOList(scheduledMeals);
@@ -95,7 +95,7 @@ public class ScheduledMealServiceImpl implements ScheduledMealService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledMealDTO> getUserMealsInDateRangeWithStatus(Long userId, MealStatus status,
+    public List<ScheduledMealDTO> getUserMealsInDateRangeWithStatus(String userId, MealStatus status,
                                                           LocalDateTime startDateTime, LocalDateTime endDateTime) {
         List<ScheduledMeal> scheduledMeals = scheduledMealRepository.findUserMealsInDateRangeWithStatus(
                 userId, status, startDateTime, endDateTime);

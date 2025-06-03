@@ -1,7 +1,7 @@
 package com.example.workoutservice.controllers;
 
 import com.example.workoutservice.dtos.ScheduledWorkoutDTO;
-import com.example.workoutservice.entities.WorkoutStatus;
+import com.example.workoutservice.enums.WorkoutStatus;
 import com.example.workoutservice.services.ScheduledWorkoutService;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
@@ -43,7 +43,7 @@ public class ScheduledWorkoutController {
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ScheduledWorkoutDTO>> getUserWorkoutsInDateRange(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {
         return ResponseEntity.ok(
@@ -53,7 +53,7 @@ public class ScheduledWorkoutController {
 
     @GetMapping("/user/{userId}/status/{status}")
     public ResponseEntity<List<ScheduledWorkoutDTO>> getUserWorkoutsInDateRangeWithStatus(
-            @PathVariable Long userId,
+            @PathVariable String userId,
             @PathVariable WorkoutStatus status,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {

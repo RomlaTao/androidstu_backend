@@ -1,4 +1,4 @@
-package com.example.workoutservice.entities;
+package com.example.workoutservice.enums;
 
 public enum WorkoutStatus {
     SCHEDULED,

@@ -1,7 +1,7 @@
 package com.example.workoutservice.services;
 
 import com.example.workoutservice.dtos.WorkoutDTO;
-import com.example.workoutservice.entities.WorkoutType;
+import com.example.workoutservice.enums.WorkoutType;
 
 import java.util.List;
 

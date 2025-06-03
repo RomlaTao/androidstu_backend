@@ -1,6 +1,6 @@
 package com.example.mealservice.dtos;
 
-import com.example.mealservice.entities.MealType;
+import com.example.mealservice.enums.MealType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,17 +16,8 @@ public class MealDTO {
 
     private String description;
 
-    @NotNull(message = "Carb is required")
-    @Min(value = 1, message = "Carb must be a non-negative number")
-    private Integer carb;
-
-    @NotNull(message = "Protein is required")
-    @Min(value = 0, message = "Protein must be a non-negative number")
-    private Integer protein;
-
-    @NotNull(message = "Lipid is required")
-    @Min(value = 0, message = "Lipid must be a non-negative number")
-    private Integer lipid;
+    @Min(value = 0, message = "Calories must be a non-negative number")
+    private Integer calories;
 
     @NotNull(message = "Meal type is required")
     private MealType type;
@@ -60,28 +51,12 @@ public class MealDTO {
         this.description = description;
     }
 
-    public Integer getCarb() {
-        return carb;
+    public Integer getCalories() {
+        return calories;
     }
 
-    public void setCarb(Integer carb) {
-        this.carb = carb;
-    }
-
-    public Integer getProtein() {
-        return protein;
-    }
-
-    public void setProtein(Integer protein) {
-        this.protein = protein;
-    }
-
-    public Integer getLipid() {
-        return lipid;
-    }
-
-    public void setLipid(Integer lipid) {
-        this.lipid = lipid;
+    public void setCalories(Integer calories) {
+        this.calories = calories;
     }
 
     public MealType getType() {

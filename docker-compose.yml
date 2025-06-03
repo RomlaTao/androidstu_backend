@@ -1,0 +1,395 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # INFRASTRUCTURE SERVICES
+  # ===========================================
+  
+  # MySQL Database for AuthService
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: auth_db
+      MYSQL_USER: auth_user
+      MYSQL_PASSWORD: auth_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - auth_db_data:/var/lib/mysql
+      - ./authservice/src/main/resources/db_migration.sql:/docker-entrypoint-initdb.d/migration.sql
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MySQL Database for UserService
+  user-db:
+    image: mysql:8.0
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: user_db
+      MYSQL_USER: user_user
+      MYSQL_PASSWORD: user_pass
+    ports:
+      - "3308:3306"
+    volumes:
+      - user_db_data:/var/lib/mysql
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MySQL Database for WorkoutService
+  workout-db:
+    image: mysql:8.0
+    container_name: workout-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: workout_db
+      MYSQL_USER: workout_user
+      MYSQL_PASSWORD: workout_pass
+    ports:
+      - "3309:3306"
+    volumes:
+      - workout_db_data:/var/lib/mysql
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MySQL Database for MealService
+  meal-db:
+    image: mysql:8.0
+    container_name: meal-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: meal_db
+      MYSQL_USER: meal_user
+      MYSQL_PASSWORD: meal_pass
+    ports:
+      - "3310:3306"
+    volumes:
+      - meal_db_data:/var/lib/mysql
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MySQL Database for AnalystService
+  analyst-db:
+    image: mysql:8.0
+    container_name: analyst-db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: analyst_db
+      MYSQL_USER: analyst_user
+      MYSQL_PASSWORD: analyst_pass
+    ports:
+      - "3311:3306"
+    volumes:
+      - analyst_db_data:/var/lib/mysql
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+
+  # ===========================================
+  # DISCOVERY SERVER
+  # ===========================================
+  
+  discovery-server:
+    build:
+      context: ./discoveryserver
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+  # APIService (Gateway)
+  api-service:
+    build:
+      context: ./apiservice
+      dockerfile: Dockerfile
+    container_name: api-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      workout-service:
+        condition: service_healthy
+      meal-service:
+        condition: service_healthy
+      analyst-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # ===========================================
+  # MICROSERVICES
+  # ===========================================
+
+  # AuthService
+  auth-service:
+    build:
+      context: ./authservice
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8005:8005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://auth-db:3306/auth_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=auth_user
+      - SPRING_DATASOURCE_PASSWORD=auth_pass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # UserService
+  user-service:
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8006:8006"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/user_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=user_user
+      - SPRING_DATASOURCE_PASSWORD=user_pass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SERVICES_AUTHSERVICE_URL=http://auth-service:8080
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      user-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # WorkoutService
+  workout-service:
+    build:
+      context: ./workoutservice
+      dockerfile: Dockerfile
+    container_name: workout-service
+    ports:
+      - "8007:8007"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://workout-db:3306/workout_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=workout_user
+      - SPRING_DATASOURCE_PASSWORD=workout_pass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SERVICES_USERSERVICE_URL=http://user-service:8006
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      workout-db:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # MealService
+  meal-service:
+    build:
+      context: ./mealservice
+      dockerfile: Dockerfile
+    container_name: meal-service
+    ports:
+      - "8008:8008"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://meal-db:3306/meal_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=meal_user
+      - SPRING_DATASOURCE_PASSWORD=meal_pass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SERVICES_USERSERVICE_URL=http://user-service:8006
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      meal-db:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # AnalystService
+  analyst-service:
+    build:
+      context: ./analystservice
+      dockerfile: Dockerfile
+    container_name: analyst-service
+    ports:
+      - "8009:8009"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://analyst-db:3306/analyst_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=analyst_user
+      - SPRING_DATASOURCE_PASSWORD=analyst_pass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SERVICES_USERSERVICE_URL=http://user-service:8006
+      - MEAL_SERVICE_URL=http://meal-service:8084
+      - WORKOUT_SERVICE_URL=http://workout-service:8007
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      analyst-db:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      meal-service:
+        condition: service_healthy
+      workout-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+# ===========================================
+# NETWORKS
+# ===========================================
+networks:
+  backend-network:
+    driver: bridge
+    name: health-app-network
+
+# ===========================================
+# VOLUMES
+# ===========================================
+volumes:
+  auth_db_data:
+    name: auth_db_data
+  user_db_data:
+    name: user_db_data
+  workout_db_data:
+    name: workout_db_data
+  meal_db_data:
+    name: meal_db_data
+  analyst_db_data:
+    name: analyst_db_data
+  redis_data:
+    name: redis_data 

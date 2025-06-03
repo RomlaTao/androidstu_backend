@@ -1,4 +1,4 @@
-package com.example.mealservice.entities;
+package com.example.mealservice.enums;
 
 public enum MealStatus {
     SCHEDULED,

@@ -16,7 +16,8 @@ public class Schedule {
     private Long id;
     
     @NotNull
-    private Long userId;
+    @Column(length = 36)
+    private String userId;
     
     @NotNull
     private String name;
@@ -42,11 +43,11 @@ public class Schedule {
         this.id = id;
     }
     
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
     
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
     

@@ -19,9 +19,7 @@ public class FoodMapper {
         dto.setId(food.getId());
         dto.setName(food.getName());
         dto.setDescription(food.getDescription());
-        dto.setCarb(food.getCarb());
-        dto.setProtein(food.getProtein());
-        dto.setLipid(food.getLipid());
+        dto.setCalories(food.getCalories());
         return dto;
     }
     
@@ -38,9 +36,7 @@ public class FoodMapper {
     public void updateEntityFromDTO(FoodDTO dto, Food food) {
         food.setName(dto.getName());
         food.setDescription(dto.getDescription());
-        food.setCarb(dto.getCarb());
-        food.setProtein(dto.getProtein());
-        food.setLipid(dto.getLipid());
+        food.setCalories(dto.getCalories());
     }
     
     public List<FoodDTO> toDTOList(List<Food> foods) {

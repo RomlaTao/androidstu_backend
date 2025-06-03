@@ -2,10 +2,11 @@ package com.example.mealservice.services.impl;
 
 import com.example.mealservice.dtos.MealDTO;
 import com.example.mealservice.entities.Meal;
-import com.example.mealservice.entities.MealType;
+import com.example.mealservice.enums.MealType;
 import com.example.mealservice.exceptions.ResourceNotFoundException;
 import com.example.mealservice.mappers.MealMapper;
 import com.example.mealservice.repositories.MealRepository;
+import com.example.mealservice.services.CalorieValidationService;
 import com.example.mealservice.services.MealService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +18,23 @@ public class MealServiceImpl implements MealService {
     
     private final MealRepository mealRepository;
     private final MealMapper mealMapper;
+    private final CalorieValidationService calorieValidationService;
     
-    public MealServiceImpl(MealRepository mealRepository, MealMapper mealMapper) {
+    public MealServiceImpl(MealRepository mealRepository, MealMapper mealMapper, 
+                          CalorieValidationService calorieValidationService) {
         this.mealRepository = mealRepository;
         this.mealMapper = mealMapper;
+        this.calorieValidationService = calorieValidationService;
     }
     
     @Override
     @Transactional
     public MealDTO createMeal(MealDTO mealDTO) {
         Meal meal = mealMapper.toEntity(mealDTO);
+        
+        // Đảm bảo calories đồng bộ trước khi lưu
+        calorieValidationService.synchronizeMealCalories(meal);
+        
         Meal savedMeal = mealRepository.save(meal);
         savedMeal = mealRepository.findByIdWithFoods(savedMeal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found after saving"));
@@ -69,6 +77,10 @@ public class MealServiceImpl implements MealService {
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found with id: " + id));
         
         mealMapper.updateEntityFromDTO(mealDTO, meal);
+        
+        // Đảm bảo calories đồng bộ trước khi lưu
+        calorieValidationService.synchronizeMealCalories(meal);
+        
         Meal updatedMeal = mealRepository.save(meal);
         updatedMeal = mealRepository.findByIdWithFoods(updatedMeal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found after updating"));

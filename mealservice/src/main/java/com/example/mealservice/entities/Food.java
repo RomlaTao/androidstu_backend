@@ -19,13 +19,7 @@ public class Food {
     private String description;
     
     @Min(0)
-    private Integer carb;
-    
-    @Min(0)
-    private Integer protein;
-    
-    @Min(0)
-    private Integer lipid;
+    private Integer calories;
     
     @ManyToOne
     @JoinColumn(name = "meal_id")
@@ -58,28 +52,16 @@ public class Food {
         this.description = description;
     }
     
-    public Integer getCarb() {
-        return carb;
+    public Integer getCalories() {
+        return calories;
     }
     
-    public void setCarb(Integer carb) {
-        this.carb = carb;
-    }
-    
-    public Integer getProtein() {
-        return protein;
-    }
-    
-    public void setProtein(Integer protein) {
-        this.protein = protein;
-    }
-    
-    public Integer getLipid() {
-        return lipid;
-    }
-    
-    public void setLipid(Integer lipid) {
-        this.lipid = lipid;
+    public void setCalories(Integer calories) {
+        this.calories = calories;
+        // Tự động cập nhật calories của meal khi food calories thay đổi
+        if (this.meal != null) {
+            this.meal.updateCaloriesFromFoods();
+        }
     }
     
     public Meal getMeal() {
@@ -88,5 +70,14 @@ public class Food {
     
     public void setMeal(Meal meal) {
         this.meal = meal;
+    }
+    
+    @PostPersist
+    @PostUpdate
+    @PostRemove
+    public void updateMealCalories() {
+        if (this.meal != null) {
+            this.meal.updateCaloriesFromFoods();
+        }
     }
 } 

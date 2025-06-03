@@ -1,7 +1,7 @@
 package com.example.workoutservice.repositories;
 
 import com.example.workoutservice.entities.Workout;
-import com.example.workoutservice.entities.WorkoutType;
+import com.example.workoutservice.enums.WorkoutType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

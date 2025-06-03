@@ -27,9 +27,7 @@ public class MealMapper {
         dto.setId(meal.getId());
         dto.setName(meal.getName());
         dto.setDescription(meal.getDescription());
-        dto.setCarb(meal.getCarb());
-        dto.setProtein(meal.getProtein());
-        dto.setLipid(meal.getLipid());
+        dto.setCalories(meal.getCalories());
         dto.setType(meal.getType());
         
         if (meal.getFoods() != null && !meal.getFoods().isEmpty()) {
@@ -55,12 +53,9 @@ public class MealMapper {
     public void updateEntityFromDTO(MealDTO dto, Meal meal) {
         meal.setName(dto.getName());
         meal.setDescription(dto.getDescription());
-        meal.setCarb(dto.getCarb());
-        meal.setProtein(dto.getProtein());
-        meal.setLipid(dto.getLipid());
         meal.setType(dto.getType());
         
-        // Cập nhật danh sách foods
+        // Cập nhật danh sách foods trước
         if (dto.getFoods() != null) {
             // Xóa tất cả foods hiện tại
             meal.getFoods().clear();
@@ -71,6 +66,15 @@ public class MealMapper {
                 food.setMeal(meal);
                 meal.getFoods().add(food);
             });
+        }
+        
+        // Tự động tính calories từ foods
+        // Nếu DTO có calories và khác với tổng foods, ưu tiên foods
+        meal.updateCaloriesFromFoods();
+        
+        // Nếu không có foods nào và DTO có calories thì sử dụng calories từ DTO
+        if ((meal.getFoods() == null || meal.getFoods().isEmpty()) && dto.getCalories() != null) {
+            meal.setCalories(dto.getCalories());
         }
     }
     

@@ -8,14 +8,14 @@ import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Table(name = "users")
 @Entity
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
-    private Integer id;
+    @Column(name = "id", nullable = false, length = 36)
+    private String id;
 
     @Column(nullable = false)
     private String fullName;
@@ -26,6 +26,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "is_user_info_initialized", nullable = false)
+    private Boolean isUserInfoInitialized = false;
+
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private Date createdAt;
@@ -34,8 +37,19 @@ public class User implements UserDetails {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    // Constructors
+    public User() {
+        this.id = UUID.randomUUID().toString();
+        this.isUserInfoInitialized = false;
+    }
+
+    public User(String id) {
+        this.id = id;
+        this.isUserInfoInitialized = false;
+    }
+
     // Getters
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
@@ -52,6 +66,10 @@ public class User implements UserDetails {
         return password;
     }
 
+    public Boolean getIsUserInfoInitialized() {
+        return isUserInfoInitialized;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -61,7 +79,7 @@ public class User implements UserDetails {
     }
 
     // Setters
-    public User setId(Integer id) {
+    public User setId(String id) {
         this.id = id;
         return this;
     }
@@ -78,6 +96,11 @@ public class User implements UserDetails {
 
     public User setPassword(String password) {
         this.password = password;
+        return this;
+    }
+
+    public User setIsUserInfoInitialized(Boolean isUserInfoInitialized) {
+        this.isUserInfoInitialized = isUserInfoInitialized;
         return this;
     }
 

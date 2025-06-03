@@ -1,7 +1,7 @@
 package com.example.mealservice.services;
 
 import com.example.mealservice.dtos.ScheduledMealDTO;
-import com.example.mealservice.entities.MealStatus;
+import com.example.mealservice.enums.MealStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,9 +14,9 @@ public interface ScheduledMealService {
     
     List<ScheduledMealDTO> getScheduledMealsByScheduleId(Long scheduleId);
     
-    List<ScheduledMealDTO> getUserMealsInDateRange(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime);
+    List<ScheduledMealDTO> getUserMealsInDateRange(String userId, LocalDateTime startDateTime, LocalDateTime endDateTime);
     
-    List<ScheduledMealDTO> getUserMealsInDateRangeWithStatus(Long userId, MealStatus status,
+    List<ScheduledMealDTO> getUserMealsInDateRangeWithStatus(String userId, MealStatus status,
                                                LocalDateTime startDateTime, LocalDateTime endDateTime);
     
     ScheduledMealDTO updateScheduledMeal(Long id, ScheduledMealDTO scheduledMealDTO);
