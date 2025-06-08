@@ -146,8 +146,9 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      timeout: 10s
-      retries: 10
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 40s
 
   # APIService (Gateway)
@@ -164,16 +165,6 @@ services:
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
     depends_on:
-      auth-service:
-        condition: service_healthy
-      user-service:
-        condition: service_healthy
-      workout-service:
-        condition: service_healthy
-      meal-service:
-        condition: service_healthy
-      analyst-service:
-        condition: service_healthy
       discovery-server:
         condition: service_healthy
       redis:
@@ -182,10 +173,11 @@ services:
       - backend-network
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # ===========================================
   # MICROSERVICES
@@ -212,16 +204,19 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
+      api-service:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - backend-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8005/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # UserService
   user-service:
@@ -237,7 +232,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=user_user
       - SPRING_DATASOURCE_PASSWORD=user_pass
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - SERVICES_AUTHSERVICE_URL=http://auth-service:8080
+      - SERVICES_AUTHSERVICE_URL=http://auth-service:8005
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
     depends_on:
@@ -254,9 +249,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/actuator/health"]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # WorkoutService
   workout-service:
@@ -289,9 +285,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8007/actuator/health"]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # MealService
   meal-service:
@@ -323,10 +320,11 @@ services:
       - backend-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8008/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # AnalystService
   analyst-service:
@@ -343,8 +341,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=analyst_pass
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
       - SERVICES_USERSERVICE_URL=http://user-service:8006
-      - MEAL_SERVICE_URL=http://meal-service:8084
-      - WORKOUT_SERVICE_URL=http://workout-service:8007
+      - SERVICES_WORKOUTSERVICE_URL=http://workout-service:8007
+      - SERVICES_MEALSERVICE_URL=http://meal-service:8008
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
     depends_on:
@@ -364,10 +362,11 @@ services:
       - backend-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      test: ["CMD", "curl", "-f", "http://localhost:8009/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 # ===========================================
 # NETWORKS

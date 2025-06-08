@@ -63,16 +63,6 @@ public class UserController {
         }
     }
 
-    //bỏ
-    @GetMapping("/email/{email}")
-    public ResponseEntity<UserDto> getUserByEmail(@PathVariable("email") String email) {
-        UserDto userDto = userService.getUserByEmail(email);
-        if (userDto == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email: " + email);
-        }
-        return ResponseEntity.ok(userDto);
-    }
-
     /**
      * Cập nhật thông tin người dùng
      * Lưu ý: Email và password không thể được cập nhật thông qua endpoint này

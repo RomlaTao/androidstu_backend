@@ -1,130 +1,157 @@
-# Meal Service
+# MealService
 
-## Overview
-Meal Service is a microservice responsible for managing meals, food items, and meal schedules in the Android Student application. This service handles the creation, retrieval, updating, and deletion of meals, as well as scheduling meals for specific times and tracking their status. The service features **automatic calorie calculation** where meal calories are synchronized with the sum of food calories.
+## Tổng Quan
 
-## Features
-- **Meal Management**: Complete CRUD operations for meals with automatic calorie calculation
-- **Food Item Management**: Individual food items that compose meals with their own calorie values
-- **Automatic Calorie Synchronization**: Meal calories are automatically calculated from food calories
-- **Meal Scheduling**: Create and manage meal schedules for users with date ranges
-- **Scheduled Meal Tracking**: Schedule specific meals for specific times with status tracking
-- **Calorie Statistics**: Query calorie intake by day, week, month, or custom date range
-- **Meal Types**: Support for BREAKFAST, LUNCH, DINNER, and SNACK
-- **Meal Status Tracking**: SCHEDULED, COMPLETED, and CANCELLED status management
-- **User-specific Meal Planning**: Filter meals and schedules by user ID and date ranges
+MealService là microservice quản lý bữa ăn, thực phẩm và lịch ăn uống của người dùng trong hệ thống Health App. Service này cung cấp khả năng quản lý bữa ăn với **tính toán calories tự động** từ tổng calories của các thực phẩm thành phần.
 
-## Technology Stack
-- Java 21
-- Spring Boot 3.2.3
-- Spring Data JPA with Hibernate
-- Spring Security (with stateless configuration)
-- MySQL Database
-- Spring Cloud Netflix Eureka Client
-- Bean Validation (Jakarta Validation)
+**Port:** 8008  
+**Database:** MySQL meal_db (port 3310)  
+**Dependencies:** Eureka (8761)
 
-## Architecture
+## Chức Năng Chính
 
-### Domain Model
-- **Meal**: Core meal entity with automatic calorie calculation from associated foods
-  - Properties: id, name, description, calories (auto-calculated), type
-  - Relationships: One-to-Many with Food items
-  - **Auto-sync**: Calories automatically updated when foods change
-- **Food**: Individual food items that compose a meal
-  - Properties: id, name, description, calories
-  - Relationships: Many-to-One with Meal
-  - **Auto-update**: Changes trigger meal calorie recalculation
-- **Schedule**: Time-based meal planning for users
-  - Properties: id, userId, name, description, startDate, endDate
-  - Relationships: One-to-Many with ScheduledMeal
-- **ScheduledMeal**: Links meals to specific schedules with timing and status
-  - Properties: id, scheduledDateTime, status, notes
-  - Relationships: Many-to-One with Schedule and Meal
-- **MealType**: Enum (BREAKFAST, LUNCH, DINNER, SNACK)
-- **MealStatus**: Enum (SCHEDULED, COMPLETED, CANCELLED)
+### 1. Quản Lý Bữa Ăn (Meals)
+- **CRUD operations**: Tạo/Sửa/Xóa bữa ăn
+- **Auto-calculate calories**: Calories = tổng calories của foods
+- **4 loại bữa ăn**: BREAKFAST, LUNCH, DINNER, SNACK
+- **Quản lý thực phẩm**: Mỗi meal có nhiều foods
+- **Tìm kiếm**: Theo tên và loại bữa ăn
 
-### Service Layer Architecture
-- **MealService**: Business logic for meal management with calorie validation
-- **CalorieCalculationService**: Calorie statistics and calculation logic
-- **CalorieValidationService**: Ensures calorie consistency between meals and foods
-- **ScheduleService**: Schedule creation and management
-- **ScheduledMealService**: Meal scheduling and status tracking
-- **Mapper Pattern**: DTOs for data transfer between layers
-- **Repository Pattern**: Data access abstraction with Spring Data JPA
+### 2. Quản Lý Lịch Ăn Uống (Schedules)
+- **Tạo lịch ăn cá nhân**: Kế hoạch ăn uống theo thời gian
+- **Quản lý thời gian**: Theo khoảng thời gian (startDate - endDate)
+- **Theo dõi bữa ăn đã lên lịch**: Kết nối với scheduled meals
 
-## Setup and Configuration
+### 3. Quản Lý Bữa Ăn Đã Lên Lịch (Scheduled Meals)
+- **3 trạng thái**: SCHEDULED, COMPLETED, CANCELLED
+- **Theo dõi tiến trình**: Cập nhật trạng thái bữa ăn
+- **Thống kê tiêu thụ**: Xem lịch sử và calories thực tế
 
-### Prerequisites
-- JDK 21
-- Maven 3.6+
-- MySQL 8.0+
+### 4. Thống Kê Calories Tiêu Thụ
+- **Thống kê theo ngày**: Calories tiêu thụ hàng ngày
+- **Thống kê theo tuần**: 7 ngày liên tiếp
+- **Thống kê theo tháng**: Toàn bộ tháng
+- **Khoảng thời gian tùy chỉnh**: Flexible date range
 
-### Database Configuration
-The service connects to a MySQL database with the following configuration:
+## MealType và MealStatus
+
+### Meal Types
+| Loại Bữa Ăn | Mô Tả |
+|--------------|-------|
+| BREAKFAST | Bữa sáng |
+| LUNCH | Bữa trưa |
+| DINNER | Bữa tối |
+| SNACK | Bữa phụ/Đồ ăn vặt |
+
+### Meal Status
+| Trạng Thái | Mô Tả |
+|------------|-------|
+| SCHEDULED | Đã lên lịch |
+| COMPLETED | Đã hoàn thành |
+| CANCELLED | Đã hủy |
+
+**Công thức tính calories:** Meal Calories = Sum(Food Calories)
+
+## Cấu Hình
+
+### Cơ Sở Dữ Liệu
 ```properties
-URL: jdbc:mysql://localhost:3310/meal_db
-Username: root
-Password: secret
-Database Schema: Auto-created/updated via Hibernate DDL
+spring.datasource.url=jdbc:mysql://localhost:3310/meal_db
+spring.datasource.username=root
+spring.datasource.password=secret
 ```
 
-### Service Configuration
-- **Port**: 8008
-- **Service Name**: mealservice
-- **Security**: Stateless configuration (authentication handled at API Gateway)
-- **CORS**: Enabled for all origins and common HTTP methods
-- **Eureka Discovery**: Registers with Eureka server at http://localhost:8761/eureka/
+### Service Discovery
+```properties
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+```
 
 ## API Endpoints
 
 ### Meal Management
-**Base URL**: `/meals`
-
-- `POST /meals` - Create a new meal (calories auto-calculated from foods)
-- `GET /meals` - Get all meals
-- `GET /meals/{id}` - Get meal by ID
-- `GET /meals/type/{type}` - Get meals by type (BREAKFAST, LUNCH, DINNER, SNACK)
-- `GET /meals/search?name={name}` - Search meals by name
-- `PUT /meals/{id}` - Update existing meal (calories auto-recalculated)
-- `DELETE /meals/{id}` - Delete meal
-
-### Calorie Statistics
-**Base URL**: `/calories`
-
-- `GET /calories/daily/{userId}?date={date}` - Get daily calorie intake
-- `GET /calories/weekly/{userId}?startDate={date}` - Get weekly calorie intake (7 days)
-- `GET /calories/monthly/{userId}?year={year}&month={month}` - Get monthly calorie intake
-- `GET /calories/range/{userId}?startDate={date}&endDate={date}` - Get calories in custom date range
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/meals` | Tạo bữa ăn mới (auto-calculate calories) |
+| GET | `/meals/{id}` | Lấy bữa ăn theo ID |
+| GET | `/meals` | Lấy tất cả bữa ăn |
+| GET | `/meals/type/{type}` | Lấy bữa ăn theo loại |
+| PUT | `/meals/{id}` | Cập nhật bữa ăn |
+| DELETE | `/meals/{id}` | Xóa bữa ăn |
 
 ### Schedule Management
-**Base URL**: `/meals/schedules`
-
-- `POST /meals/schedules` - Create a new schedule
-- `GET /meals/schedules/{id}` - Get schedule by ID
-- `GET /meals/schedules/user/{userId}` - Get all schedules for a user
-- `GET /meals/schedules/user/{userId}/date-range?startDate={date}&endDate={date}` - Get schedules in date range
-- `PUT /meals/schedules/{id}` - Update existing schedule
-- `DELETE /meals/schedules/{id}` - Delete schedule
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/meals/schedules` | Tạo lịch ăn mới |
+| GET | `/meals/schedules/{id}` | Lấy lịch ăn theo ID |
+| GET | `/meals/schedules/user/{userId}` | Lấy lịch ăn của user |
+| GET | `/meals/schedules/user/{userId}/date-range` | Lấy lịch theo khoảng thời gian |
+| PUT | `/meals/schedules/{id}` | Cập nhật lịch ăn |
+| DELETE | `/meals/schedules/{id}` | Xóa lịch ăn |
 
 ### Scheduled Meal Management
-**Base URL**: `/meals/scheduled-meals`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/meals/scheduled-meals` | Tạo bữa ăn đã lên lịch |
+| GET | `/meals/scheduled-meals/{id}` | Lấy bữa ăn theo ID |
+| GET | `/meals/scheduled-meals/schedule/{scheduleId}` | Lấy bữa ăn theo lịch |
+| GET | `/meals/scheduled-meals/user/{userId}` | Lấy bữa ăn của user |
+| GET | `/meals/scheduled-meals/user/{userId}/status/{status}` | Lấy theo trạng thái |
+| PUT | `/meals/scheduled-meals/{id}` | Cập nhật bữa ăn |
+| PATCH | `/meals/scheduled-meals/{id}/status/{status}` | Cập nhật trạng thái |
+| DELETE | `/meals/scheduled-meals/{id}` | Xóa bữa ăn |
 
-- `POST /meals/scheduled-meals` - Schedule a meal
-- `GET /meals/scheduled-meals/{id}` - Get scheduled meal by ID
-- `GET /meals/scheduled-meals/schedule/{scheduleId}` - Get all scheduled meals for a schedule
-- `GET /meals/scheduled-meals/user/{userId}?startDateTime={datetime}&endDateTime={datetime}` - Get user's scheduled meals in date range
-- `GET /meals/scheduled-meals/user/{userId}/status/{status}?startDateTime={datetime}&endDateTime={datetime}` - Get user's scheduled meals by status in date range
-- `PUT /meals/scheduled-meals/{id}` - Update scheduled meal
-- `PATCH /meals/scheduled-meals/{id}/status/{status}` - Update meal status only
-- `DELETE /meals/scheduled-meals/{id}` - Cancel/delete scheduled meal
+### Calorie Statistics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/meals/calories/daily/{userId}?date={date}` | Thống kê theo ngày |
+| GET | `/meals/calories/weekly/{userId}?startDate={date}` | Thống kê theo tuần |
+| GET | `/meals/calories/monthly/{userId}?year={year}&month={month}` | Thống kê theo tháng |
+| GET | `/meals/calories/range/{userId}?startDate={start}&endDate={end}` | Thống kê tùy chỉnh |
 
-## JSON Request Examples
+## Tech Stack
 
-### Meal Management Examples
+- **Spring Boot:** 3.2.3
+- **Java:** 21
+- **Database:** MySQL 8.0
+- **ORM:** Spring Data JPA
+- **Security:** Spring Security
+- **Service Discovery:** Eureka Client
+- **Validation:** Bean Validation
 
-#### Create Meal with Auto-calculated Calories
+## Cài Đặt
+
+### 1. Chuẩn Bị Database
+```bash
+docker run --name meal-mysql -p 3310:3306 \
+  -e MYSQL_ROOT_PASSWORD=secret \
+  -e MYSQL_DATABASE=meal_db \
+  -d mysql:8.0
+```
+
+### 2. Khởi Chạy Service
+```bash
+cd mealservice
+mvn spring-boot:run
+```
+
+## Postman Test Cases
+
+### Environment Variables
 ```json
-POST /meals
+{
+  "gateway_url": "http://localhost:8080",
+  "meal_url": "http://localhost:8008",
+  "user_id": "testuser123",
+  "access_token": "your_jwt_token"
+}
+```
+
+### 1. Tạo Bữa Ăn với Auto-Calculate Calories
+```json
+POST {{gateway_url}}/meals
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
 {
   "name": "Healthy Breakfast Bowl",
   "description": "Nutritious breakfast with automatic calorie calculation",
@@ -149,51 +176,44 @@ POST /meals
 }
 ```
 
-**Response** (calories = 150 + 85 + 165 = 400):
+### 2. Tạo Bữa Ăn Đơn Giản
 ```json
-{
-  "id": 1,
-  "name": "Healthy Breakfast Bowl",
-  "description": "Nutritious breakfast with automatic calorie calculation",
-  "calories": 400,
-  "type": "BREAKFAST",
-  "foods": [...]
-}
-```
+POST {{gateway_url}}/meals
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
 
-#### Create Simple Meal Without Foods
-```json
-POST /meals
 {
-  "name": "Simple Protein Shake",
+  "name": "Protein Shake",
   "description": "Quick protein drink",
   "calories": 200,
   "type": "SNACK"
 }
 ```
 
-#### Update Meal - Calories Auto-recalculated
+### 3. Lấy Bữa Ăn Theo Loại
 ```json
-PUT /meals/{id}
+GET {{gateway_url}}/meals/type/BREAKFAST
+Authorization: Bearer {{access_token}}
+```
+
+### 4. Cập Nhật Bữa Ăn (Auto-Recalculate)
+```json
+PUT {{gateway_url}}/meals/1
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
 {
   "name": "Enhanced Breakfast Bowl",
   "description": "Improved breakfast with extra nutrition",
   "type": "BREAKFAST",
   "foods": [
     {
-      "id": 1,
       "name": "Rolled Oats",
       "calories": 150
     },
     {
-      "id": 2,
       "name": "Fresh Blueberries",
       "calories": 85
-    },
-    {
-      "id": 3,
-      "name": "Almonds",
-      "calories": 165
     },
     {
       "name": "Greek Yogurt",
@@ -204,293 +224,122 @@ PUT /meals/{id}
 }
 ```
 
-**Result**: Meal calories automatically updated to 500
-
-### Calorie Statistics Examples
-
-#### Daily Calories
-```bash
-GET /calories/daily/1001?date=2024-01-15
-```
-
-**Response**:
+### 5. Tạo Lịch Ăn Uống
 ```json
+POST {{gateway_url}}/meals/schedules
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
 {
-  "userId": 1001,
-  "date": "2024-01-15",
-  "totalCalories": 1850
+  "userId": "{{user_id}}",
+  "name": "Weekly Meal Plan",
+  "description": "Healthy meal plan for the week",
+  "startDate": "2024-01-15",
+  "endDate": "2024-01-21"
 }
 ```
 
-#### Weekly Calories
-```bash
-GET /calories/weekly/1001?startDate=2024-01-15
-```
-
-**Response**:
+### 6. Lên Lịch Bữa Ăn
 ```json
-[
-  {
-    "userId": 1001,
-    "date": "2024-01-15",
-    "totalCalories": 1850
-  },
-  {
-    "userId": 1001,
-    "date": "2024-01-16",
-    "totalCalories": 1920
-  }
-  // ... 5 more days
-]
-```
+POST {{gateway_url}}/meals/scheduled-meals
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
 
-#### Custom Range Calories
-```bash
-GET /calories/range/1001?startDate=2024-01-01&endDate=2024-01-31
-```
-
-### Schedule Management Examples
-
-#### Create Schedule
-```json
-POST /meals/schedules
-{
-  "userId": 123,
-  "name": "Weekly Meal Plan - January 2024",
-  "description": "Healthy meal plan for the first week of January",
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-07"
-}
-```
-
-#### Update Schedule
-```json
-PUT /meals/schedules/{id}
-{
-  "userId": 123,
-  "name": "Updated Weekly Meal Plan - January 2024",
-  "description": "Modified healthy meal plan for the first week of January",
-  "startDate": "2024-01-01",
-  "endDate": "2024-01-10"
-}
-```
-
-### Scheduled Meal Management Examples
-
-#### Schedule a Meal
-```json
-POST /meals/scheduled-meals
 {
   "scheduleId": 1,
-  "mealId": 5,
-  "scheduledDateTime": "2024-01-02T12:30:00",
+  "mealId": 1,
+  "scheduledDateTime": "2024-01-15T08:00:00",
   "status": "SCHEDULED",
-  "notes": "Lunch at the office cafeteria"
+  "notes": "Breakfast at home"
 }
 ```
 
-#### Update Scheduled Meal
+### 7. Cập Nhật Trạng Thái Bữa Ăn
 ```json
-PUT /meals/scheduled-meals/{id}
-{
-  "scheduleId": 1,
-  "mealId": 8,
-  "scheduledDateTime": "2024-01-02T13:00:00",
-  "status": "SCHEDULED",
-  "notes": "Changed to healthier option - moved time to 1 PM"
-}
+PATCH {{gateway_url}}/meals/scheduled-meals/1/status/COMPLETED
+Authorization: Bearer {{access_token}}
 ```
 
-### Common Request Patterns
-
-#### Meal Types Available
-- `BREAKFAST`
-- `LUNCH` 
-- `DINNER`
-- `SNACK`
-
-#### Meal Status Available
-- `SCHEDULED`
-- `COMPLETED`
-- `CANCELLED`
-
-#### Date Format Examples
-- **Date**: `"2024-01-15"` (ISO 8601 date format)
-- **DateTime**: `"2024-01-15T14:30:00"` (ISO 8601 datetime format)
-
-### Query Parameters Examples
-
-#### Search Meals by Name
-```
-GET /meals/search?name=chicken
-```
-
-#### Get Schedules in Date Range
-```
-GET /meals/schedules/user/123/date-range?startDate=2024-01-01&endDate=2024-01-31
-```
-
-#### Get User's Scheduled Meals in Date Range
-```
-GET /meals/scheduled-meals/user/123?startDateTime=2024-01-01T00:00:00&endDateTime=2024-01-31T23:59:59
-```
-
-#### Get User's Scheduled Meals by Status
-```
-GET /meals/scheduled-meals/user/123/status/COMPLETED?startDateTime=2024-01-01T00:00:00&endDateTime=2024-01-31T23:59:59
-```
-
-### Response Format Examples
-
-#### Successful Meal Creation Response (201 Created)
+### 8. Thống Kê Calories Theo Ngày
 ```json
+GET {{gateway_url}}/meals/calories/daily/{{user_id}}?date=2024-01-15
+Authorization: Bearer {{access_token}}
+```
+
+### 9. Thống Kê Calories Theo Tuần
+```json
+GET {{gateway_url}}/meals/calories/weekly/{{user_id}}?startDate=2024-01-15
+Authorization: Bearer {{access_token}}
+```
+
+### 10. Thống Kê Calories Theo Tháng
+```json
+GET {{gateway_url}}/meals/calories/monthly/{{user_id}}?year=2024&month=1
+Authorization: Bearer {{access_token}}
+```
+
+### 11. Thống Kê Calories Tùy Chỉnh
+```json
+GET {{gateway_url}}/meals/calories/range/{{user_id}}?startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{access_token}}
+```
+
+### 12. Lấy Lịch Theo Khoảng Thời Gian
+```json
+GET {{gateway_url}}/meals/schedules/user/{{user_id}}/date-range?startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{access_token}}
+```
+
+### 13. Lấy Bữa Ăn Theo Trạng Thái
+```json
+GET {{gateway_url}}/meals/scheduled-meals/user/{{user_id}}/status/COMPLETED?startDateTime=2024-01-01T00:00:00&endDateTime=2024-01-31T23:59:59
+Authorization: Bearer {{access_token}}
+```
+
+### 14. Tạo Bữa Tối Phức Tạp
+```json
+POST {{gateway_url}}/meals
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
 {
-  "id": 1,
-  "name": "Healthy Breakfast Bowl",
-  "description": "Nutritious breakfast with automatic calorie calculation",
-  "calories": 400,
-  "type": "BREAKFAST",
+  "name": "Balanced Dinner",
+  "description": "Well-balanced evening meal",
+  "type": "DINNER",
   "foods": [
     {
-      "id": 1,
-      "name": "Rolled Oats",
-      "description": "Organic whole grain oats",
-      "calories": 150
+      "name": "Grilled Chicken Breast",
+      "description": "Lean protein source",
+      "calories": 230
     },
     {
-      "id": 2,
-      "name": "Fresh Blueberries",
-      "description": "Antioxidant-rich berries",
-      "calories": 85
+      "name": "Brown Rice",
+      "description": "Complex carbohydrates",
+      "calories": 110
+    },
+    {
+      "name": "Steamed Broccoli",
+      "description": "Vitamin-rich vegetables",
+      "calories": 55
     }
   ]
 }
 ```
 
-#### Calorie Statistics Response
+### 15. Xóa Bữa Ăn
 ```json
-{
-  "userId": 1001,
-  "date": "2024-01-15",
-  "totalCalories": 1850
-}
+DELETE {{gateway_url}}/meals/1
+Authorization: Bearer {{access_token}}
 ```
 
-#### Error Response (400 Bad Request)
-```json
-{
-  "timestamp": "2024-01-15T10:30:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Validation failed",
-  "path": "/meals",
-  "details": [
-    {
-      "field": "name",
-      "message": "Meal name is required"
-    },
-    {
-      "field": "calories",
-      "message": "Calories must be a non-negative number"
-    }
-  ]
-}
-```
+## Lưu Ý
 
-## Automatic Calorie Calculation
-
-### Key Features
-1. **Meal calories = Sum of food calories**: When foods are added/updated, meal calories auto-update
-2. **Data Consistency**: Database-level validation ensures calorie accuracy
-3. **Flexible Creation**: Can create meals with or without foods
-4. **Real-time Updates**: Changes to food calories immediately update meal calories
-
-### Workflow Examples
-
-#### Standard Workflow
-1. **Create meal with foods**: Calories calculated automatically
-2. **Create schedule**: Plan meals for specific date range
-3. **Schedule meals**: Assign meals to specific times
-4. **Mark as completed**: Track actual food consumption
-5. **Query statistics**: Get calorie intake analytics
-
-#### Calorie Update Scenarios
-- **Add food to meal**: Meal calories increase automatically
-- **Remove food**: Meal calories decrease automatically  
-- **Update food calories**: Meal calories recalculated
-- **Replace foods**: New total calculated from new foods
-
-## Workflow
-
-### Typical Use Cases
-
-1. **Meal Creation Workflow**:
-   - Create individual food items with calorie values
-   - Create meals and associate food items
-   - Calories automatically calculated from foods
-   - Set meal type for categorization
-
-2. **Schedule Planning Workflow**:
-   - Create a schedule for a user with date range
-   - Schedule specific meals for specific times within the schedule
-   - Track meal completion status
-
-3. **Daily Meal Tracking Workflow**:
-   - Query scheduled meals for current day
-   - Update meal status as COMPLETED or CANCELLED
-   - View calorie progress using statistics APIs
-
-4. **Calorie Analytics Workflow**:
-   - Query daily, weekly, monthly calorie intake
-   - Use custom date ranges for specific analysis
-   - Track calorie trends over time
-
-## Building and Running
-
-### Build the service:
-```bash
-./mvnw clean install
-```
-
-### Run the service:
-```bash
-./mvnw spring-boot:run
-```
-
-### Run with specific profile:
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-## Data Transfer Objects (DTOs)
-The service uses DTOs for clean separation between API and domain models:
-- `MealDTO`: Meal data transfer with associated foods and auto-calculated calories
-- `FoodDTO`: Individual food item data with calories
-- `CalorieStatsDto`: Simplified calorie statistics (userId, date, totalCalories)
-- `ScheduleDTO`: Schedule information with optional scheduled meals
-- `ScheduledMealDTO`: Scheduled meal with meal details
-
-## Security
-- **Stateless Configuration**: No session management
-- **CORS Enabled**: Cross-origin requests allowed
-- **Gateway Authentication**: Authentication handled at API Gateway level
-- **All Endpoints Public**: Internal service assumes pre-authenticated requests
-
-## Integration
-This service is part of a microservice architecture:
-- **Service Discovery**: Registers with Netflix Eureka
-- **API Gateway**: Routes requests through central gateway
-- **Database**: Dedicated MySQL database for meal data
-- **Inter-service Communication**: RESTful APIs for service-to-service calls
-
-## Error Handling
-- **ResourceNotFoundException**: For non-existent entities
-- **Validation Errors**: Bean validation with detailed error messages
-- **Calorie Consistency Errors**: Automatic synchronization prevents inconsistencies
-- **Standardized Response Format**: Consistent error response structure
-
-## Monitoring and Observability
-- **Spring Boot Actuator**: Health checks and metrics
-- **Eureka Registration**: Service health monitoring
-- **Structured Logging**: Consistent log format for debugging
-- **Calorie Audit Trail**: Track calorie calculation changes 
+- **Auto-calculation**: Calories được tính tự động từ foods, không cần manual input
+- **Data consistency**: JPA lifecycle hooks đảm bảo calories accuracy
+- **Performance**: Optimized queries cho thống kê nhanh chóng
+- **API Gateway**: Service hoạt động sau lớp API Gateway
+- **Authentication**: Xác thực được xử lý ở tầng gateway
+- **User ID**: Được truyền từ gateway sau khi xác thực thành công
+- **DateTime Format**: Sử dụng ISO-8601 format cho tất cả datetime fields
+- **Status Enum**: Các giá trị status phải match chính xác với MealStatus enum
+- **Required Fields**: Tất cả fields có annotation @NotNull hoặc @NotBlank là bắt buộc

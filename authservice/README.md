@@ -1,329 +1,195 @@
-# Authentication Service
+# AuthService
 
-## Giới thiệu
-Authentication Service là một microservice được xây dựng bằng Spring Boot, cung cấp các chức năng xác thực và quản lý người dùng. Service này sử dụng JWT (JSON Web Token) để xác thực người dùng và Spring Security để bảo mật.
+## Chức năng chính
 
-## Công nghệ sử dụng
-- Java 21
-- Spring Boot 3.2.3
-- Spring Security
-- JWT (JJWT 0.11.5)
-- Spring Data JPA
-- MySQL Database
-- Redis (cho JWT blacklist)
-- Maven
+**AuthService** là dịch vụ xác thực trung tâm của hệ thống microservices, chuyên trách quản lý authentication và authorization.
 
-## Cấu trúc Project
-```
-authservice/
-├── src/main/java/com/example/authservice/
-│   ├── configs/            # Cấu hình Spring Security và JWT
-│   ├── controllers/        # REST Controllers
-│   ├── dtos/              # Data Transfer Objects
-│   ├── entities/          # JPA Entities
-│   ├── exceptions/        # Exception Handlers
-│   ├── repositories/      # Spring Data Repositories
-│   ├── responses/         # Response Models
-│   ├── services/         # Business Logic Services
-│   └── AuthserviceApplication.java
-```
+### 🔐 Tính Năng Xác Thực
+- **Đăng ký (Signup)**: Tạo tài khoản mới với validation
+- **Đăng nhập (Login)**: Xác thực và cấp JWT token
+- **Đăng xuất (Logout)**: Vô hiệu hóa token qua blacklist
+- **Đổi mật khẩu**: Cập nhật mật khẩu với token mới
+- **Quản lý User**: Đồng bộ thông tin với UserService
+- **JWT Security**: Token-based authentication
+- **Token Blacklist**: Redis-based token revocation
 
-## API Endpoints
+### 🏗️ Kiến Trúc
+- **User Entity**: Lưu thông tin xác thực (id, email, password, fullName)
+- **JWT Service**: Quản lý token generation/validation
+- **Security Config**: Spring Security configuration
+- **User Sync**: Tích hợp với UserService để đồng bộ profile
 
-### Authentication
-- **POST** `/auth/signup` - Đăng ký người dùng mới
-  - API Gateway URL: `http://localhost:8080/auth/signup`
-  ```json
-  {
-    "fullName": "string",
-    "email": "string",
-    "password": "string"
-  }
-  ```
-  Response:
-  ```json
-  {
-    "id": "number",
-    "fullName": "string",
-    "email": "string",
-    "createdAt": "datetime",
-    "updatedAt": "datetime"
-  }
-  ```
+## Cấu hình
 
-- **POST** `/auth/login` - Đăng nhập
-  - API Gateway URL: `http://localhost:8080/auth/login`
-  ```json
-  {
-    "email": "string",
-    "password": "string"
-  }
-  ```
-  Response:
-  ```json
-  {
-    "accessToken": "string",
-    "tokenType": "Bearer",
-    "expiresIn": "number"
-  }
-  ```
-
-- **POST** `/auth/change-password` - Đổi mật khẩu (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/auth/change-password`
-  ```json
-  {
-    "email": "nguyenvana@example.com",
-    "currentPassword": "NewPassword456",
-    "newPassword": "Password123"
-  }
-  ```
-  Response:
-  ```json
-  {
-    "message": "Password changed successfully",
-    "accessToken": "string", 
-    "expiresIn": "number"
-  }
-  ```
-
-- **POST** `/auth/logout` - Đăng xuất (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/auth/logout`
-  Response:
-  ```json
-  {
-    "message": "Logged out successfully"
-  }
-  ```
-
-### Users
-- **GET** `/auth/users/me` - Lấy thông tin người dùng hiện tại (yêu cầu JWT)
-- **GET** `/auth/users/` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
-
-## Cài đặt và Chạy
-
-### Yêu cầu
-- Java Development Kit (JDK) 21
-- Maven 3.9+
-- MySQL 8.0+
-- Redis (tùy chọn cho JWT blacklist)
-
-### Cài đặt MySQL bằng Docker
-
-1. Tạo container MySQL
-```bash
-docker run --name auth-db -e MYSQL_ROOT_PASSWORD=yourpassword -e MYSQL_DATABASE=auth_db -p 3306:3306 -d mysql:8.0
-```
-
-2. Kiểm tra container đã chạy
-```bash
-docker ps
-```
-
-3. Kết nối đến MySQL
-```bash
-docker exec -it mysql-auth mysql -u root -p
-```
-
-### Cài đặt Redis bằng Docker (cho JWT blacklist)
-
-1. Tạo container Redis
-```bash
-docker run --name redis-auth -p 6379:6379 -d redis
-```
-
-2. Kiểm tra container đã chạy
-```bash
-docker ps
-```
-
-### Các bước cài đặt
-
-1. Clone repository
-```bash
-git clone <repository-url>
-cd authservice
-```
-
-2. Cấu hình database trong `src/main/resources/application.properties`
+### Cấu Hình Cơ Bản
 ```properties
-# Server Configuration
+# Máy chủ
 server.port=8005
 
-# Database Configuration
+# Database MySQL
 spring.datasource.url=jdbc:mysql://localhost:3307/auth_db
 spring.datasource.username=root
 spring.datasource.password=secret
 
-# Hibernate properties
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.open-in-view=false
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
-
-# JWT Configuration
+# JWT Security
 security.jwt.secret-key=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
-# 1h in millisecond
 security.jwt.expiration-time=3600000
 
-# Redis Configuration (cho JWT blacklist)
+# Redis (Token Blacklist)
 spring.redis.host=localhost
 spring.redis.port=6379
 
-# Eureka Configuration
+# UserService Integration
+services.user-service.url=http://localhost:8006
+
+# Eureka Discovery
 eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
-eureka.instance.prefer-ip-address=true
 ```
 
-3. Build project
+### Hạ Tầng Cần Thiết
+- **MySQL** (port 3307): Database auth_db
+- **Redis** (port 6379): Token blacklist storage
+- **UserService** (port 8006): User profile management
+- **Eureka Server** (port 8761): Service discovery
+
+### Cài Đặt Database
 ```bash
-mvn clean install
+# MySQL với Docker
+docker run --name auth-db -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=auth_db -p 3307:3307 -d mysql:8.0
+
+# Redis với Docker
+docker run --name redis-auth -p 6379:6379 -d redis
 ```
 
-4. Chạy ứng dụng
-```bash
-mvn spring-boot:run
-```
+### Ngăn Xếp Công Nghệ
+- Spring Boot 3.2.3
+- Spring Security + JWT (JJWT 0.11.5)
+- MySQL Database + Spring Data JPA
+- Redis (Token blacklist)
+- Eureka Client
 
-Ứng dụng sẽ chạy trên port 8005.
+## API Test Cases (Postman)
 
-## Thử nghiệm với Postman
-
-### Collection Setup
-
-1. Tạo một collection mới trong Postman với tên "Auth Service API"
-2. Đặt biến môi trường:
-   - `base_url`: http://localhost:8080
-   - `token`: <JWT token từ quá trình đăng nhập>
-
-### Test Cases
-
-1. **Đăng Ký Người Dùng**
-   - Method: POST
-   - URL: {{base_url}}/auth/signup
-   - Headers: Content-Type: application/json
-   - Body:
-     ```json
-     {
-       "fullName": "Test User",
-       "email": "test@example.com",
-       "password": "password123"
-     }
-     ```
-   - Expected: 201 Created với thông tin người dùng
-
-2. **Đăng Nhập**
-   - Method: POST
-   - URL: {{base_url}}/auth/login
-   - Headers: Content-Type: application/json
-   - Body:
-     ```json
-     {
-       "email": "test@example.com",
-       "password": "password123"
-     }
-     ```
-   - Script (để lưu token):
-     ```javascript
-     pm.environment.set("token", pm.response.json().accessToken);
-     ```
-   - Expected: 200 OK với JWT token
-
-3. **Đổi Mật Khẩu**
-   - Method: POST
-   - URL: {{base_url}}/auth/change-password
-   - Headers: 
-     - Content-Type: application/json
-     - Authorization: Bearer {{token}}
-   - Body:
-     ```json
-     {
-       "currentPassword": "password123",
-       "newPassword": "newpassword123"
-     }
-     ```
-   - Expected: 200 OK với thông báo thành công và token mới
-
-4. **Đăng Xuất**
-   - Method: POST
-   - URL: {{base_url}}/auth/logout
-   - Headers: Authorization: Bearer {{token}}
-   - Expected: 200 OK với thông báo thành công
-
-## Tính năng
-- Đăng ký và đăng nhập người dùng
-- Xác thực thông qua JWT token
-- Đổi mật khẩu với cấp token mới
-- Đăng xuất với JWT blacklist
-- Tích hợp với UserService để quản lý thông tin người dùng
-
-## Bảo mật
-- Xác thực dựa trên JWT (JSON Web Token)
-- Mật khẩu được mã hóa bằng BCrypt
-- Spring Security với các cấu hình bảo mật mặc định
-- Stateless authentication
-- JWT blacklist để quản lý token đã hết hạn hoặc đăng xuất
-- CORS được cấu hình sẵn
-
-## Quy trình đăng ký và đăng nhập
-1. Người dùng đăng ký tài khoản thông qua `/auth/signup`
-2. AuthService lưu thông tin người dùng vào database
-3. AuthService gọi UserService API để tạo profile người dùng
-4. Khi đăng nhập, AuthService kiểm tra thông tin và cấp JWT token
-5. JWT token được sử dụng để xác thực các request tiếp theo
-
-## Quy trình đổi mật khẩu và đăng xuất
-1. Khi đổi mật khẩu, AuthService kiểm tra mật khẩu hiện tại
-2. Sau khi đổi mật khẩu thành công, một token mới được cấp
-3. Khi đăng xuất, token hiện tại được thêm vào blacklist
-4. Token trong blacklist không thể sử dụng để xác thực
-
-## Cấu trúc Database
-### Bảng Users
-- id (Integer, Primary Key)
-- full_name (String)
-- email (String, Unique)
-- password (String, Encrypted)
-- created_at (Timestamp)
-- updated_at (Timestamp)
-
-## Môi trường
-Các biến môi trường cần thiết:
-- `MYSQL_HOST`: Host của MySQL database
-- `MYSQL_PORT`: Port của MySQL database
-- `MYSQL_DATABASE`: Tên database
-- `MYSQL_USER`: Username MySQL
-- `MYSQL_PASSWORD`: Password MySQL
-- `JWT_SECRET_KEY`: Khóa bí mật cho JWT (Base64 encoded)
-- `JWT_EXPIRATION`: Thời gian hết hạn của JWT (milliseconds)
-- `REDIS_HOST`: Host của Redis (cho JWT blacklist)
-- `REDIS_PORT`: Port của Redis (cho JWT blacklist)
-- `USER_SERVICE_URL`: URL của UserService
-
-## Phát triển
-- Sử dụng các branch riêng cho mỗi tính năng mới
-- Tuân thủ code style của project
-- Viết unit test cho các chức năng mới
-- Sử dụng meaningful commit messages
-
-## Giải pháp thay thế cho Redis
-Nếu không muốn sử dụng Redis cho JWT blacklist, có thể dùng giải pháp InMemoryTokenBlacklist:
-
-1. Tạo class InMemoryTokenBlacklist
-```java
-@Service
-public class InMemoryTokenBlacklist {
-    private final Set<String> blacklist = new ConcurrentHashMap<String, Boolean>().newKeySet();
-    
-    public void addToBlacklist(String token) {
-        blacklist.add(token);
-    }
-    
-    public boolean isBlacklisted(String token) {
-        return blacklist.contains(token);
-    }
+### Environment Variables
+```json
+{
+  "auth_url": "http://localhost:8080",
+  "user_email": "test@example.com",
+  "user_password": "password123",
+  "new_password": "newpassword456",
+  "access_token": ""
 }
 ```
 
-2. Cập nhật JwtAuthenticationFilter để sử dụng InMemoryTokenBlacklist
+### 🔓 Authentication Tests (Public)
 
-## License
-[MIT License](LICENSE) 
+#### 1. Đăng Ký Người Dùng
+```json
+{
+  "method": "POST",
+  "url": "{{auth_url}}/auth/signup",
+  "headers": {"Content-Type": "application/json"},
+  "body": {
+    "fullName": "Test User",
+    "email": "{{user_email}}",
+    "password": "{{user_password}}"
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Đăng ký tài khoản thành công",
+  "userId": "uuid-string",
+  "email": "test@example.com",
+  "fullName": "Test User"
+}
+```
+
+#### 2. Đăng Nhập
+```json
+{
+  "method": "POST", 
+  "url": "{{auth_url}}/auth/login",
+  "headers": {"Content-Type": "application/json"},
+  "body": {
+    "email": "{{user_email}}",
+    "password": "{{user_password}}"
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "expiresIn": 3600000,
+  "userId": "uuid-string",
+  "isUserInfoInitialized": false
+}
+```
+
+### 🔒 Authenticated Tests (Yêu Cầu Token)
+
+#### 3. Đổi Mật Khẩu
+```json
+{
+  "method": "POST",
+  "url": "{{auth_url}}/auth/change-password",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {{access_token}}"
+  },
+  "body": {
+    "email": "{{user_email}}",
+    "currentPassword": "{{user_password}}",
+    "newPassword": "{{new_password}}"
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Mật khẩu đã được thay đổi thành công",
+  "token": "new-jwt-token",
+  "expiresIn": 3600000
+}
+```
+
+#### 4. Đăng Xuất
+```json
+{
+  "method": "POST",
+  "url": "{{auth_url}}/auth/logout",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "message": "Đăng xuất thành công"
+}
+```
+
+#### 5. Lấy Thông Tin User Hiện Tại
+```json
+{
+  "method": "GET",
+  "url": "{{auth_url}}/auth/users/me",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
+
+## Luồng Xác Thực
+1. **Client** → Đăng ký → **AuthService** → Lưu user → Đồng bộ **UserService**
+2. **Client** → Đăng nhập → **AuthService** → Validate → Generate JWT
+3. **Client** → Request với JWT → **API Gateway** → Validate JWT
+4. **Client** → Đăng xuất → **AuthService** → Blacklist token → **Redis**
+5. **UserService** → Complete profile → **AuthService** → Mark initialized 

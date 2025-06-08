@@ -53,6 +53,12 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		
+		<!-- Spring Boot Actuator for Health Checks -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
 		<!-- Eureka Client for Service Discovery -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

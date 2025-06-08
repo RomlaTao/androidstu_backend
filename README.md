@@ -1,281 +1,230 @@
-# Health Application Backend Microservices
+# Health App Backend - Microservices System
 
-## Giới thiệu
-    Hệ thống backend của ứng dụng Health gồm **6 microservices** chính được thiết kế theo kiến trúc microservice hiện đại:
+## Tổng Quan Hệ Thống
 
-- **APIService (API Gateway)**: Điểm vào trung tâm cho tất cả client requests, xử lý xác thực tập trung và định tuyến
-- **AuthService**: Quản lý đăng ký, đăng nhập, và đăng xuất người dùng  
-- **UserService**: Quản lý thông tin người dùng và dữ liệu sức khỏe
-- **WorkoutService**: Quản lý bài tập, lịch tập với **tính toán calories tự động từ MET values**
-- **MealService**: Quản lý bữa ăn, thực phẩm với **tự động đồng bộ calories**
-- **AnalystService**: Phân tích sức khỏe và hoạt động với **AI-powered calculations**
+Hệ thống backend Health App được xây dựng theo kiến trúc microservices hiện đại, bao gồm **6 services chính** với các tính năng AI-powered và tính toán khoa học cho sức khỏe và dinh dưỡng.
 
-## 🏗️ Kiến trúc Hệ Thống
+**🏗️ Kiến Trúc:** Microservices với Service Discovery  
+**🔒 Bảo Mật:** JWT Authentication + Redis Blacklist  
+**📊 Analytics:** AI-powered health calculations với MET values  
+**⚡ Performance:** Auto-calculation engines + Batch optimization
 
-### Microservices Architecture
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Mobile App    │    │   Web Client    │    │   Admin Panel   │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼─────────────┐
-                    │      API Gateway         │
-                    │     (Port: 8080)         │
-                    │   • JWT Authentication   │
-                    │   • Rate Limiting        │
-                    │   • Circuit Breaker      │
-                    │   • Request Routing      │
-                    └─────────────┬─────────────┘
-                                 │
-          ┌──────────────────────┼──────────────────────┌──────────────────────┌──────────────────────┐
-          │                      │                      │
-    ┌─────▼─────┐         ┌─────▼─────┐         ┌─────▼─────┐
-    │ AuthService│         │UserService│         │WorkoutSvc │  
-    │ Port: 8005 │         │Port: 8006 │         │Port: 8007 │
-    └─────┬─────┘         └─────┬─────┘         └─────┬─────┘
-          │                     │                     │
-          │               ┌─────▼─────┐         ┌─────▼─────┐
-          │               │ MealService│         │AnalystSvc │
-          │               │Port: 8008 │         │Port: 8009 │
-          │               └───────────┘         └───────────┘
-          │
-    ┌─────▼─────┐
-    │   Redis   │
-    │Port: 6379 │
-    │(Blacklist)│
-    └───────────┘
-```
+## 🎯 Microservices Overview
 
-### Technology Stack
-- **Framework**: Spring Boot 3.2.3
-- **Language**: Java 21  
-- **Security**: Spring Security + JWT
-- **Database**: MySQL 8.0 (per service)
-- **Caching**: Redis (token blacklist)
-- **Service Discovery**: Netflix Eureka
-- **API Gateway**: Spring Cloud Gateway
-- **Container**: Docker & Docker Compose ready
-
-## 📊 Service Details
-
-| Service | Port | Database | Main Features |
+| Service | Port | Database | Core Features |
 |---------|------|----------|---------------|
 | **API Gateway** | 8080 | - | Routing, Auth, Rate Limiting, Circuit Breaker |
-| **AuthService** | 8005 | auth_db (3306) | Registration, Login, JWT Management, Token Blacklist |
-| **UserService** | 8006 | user_db (3307) | User Profile, Health Data, Personal Information |
-| **WorkoutService** | 8007 | workout_db (3309) | **MET-based Calorie Calculation**, Workout Scheduling |
-| **MealService** | 8008 | meal_db (3310) | **Auto-sync Calories**, Meal Planning, Nutrition Tracking |
-| **AnalystService** | 8009 | - | **AI Health Analytics**, BMI/BMR/TDEE, Activity Analysis |
+| **AuthService** | 8005 | auth_db (3307) | JWT Authentication, Token Blacklist, User Registration |
+| **UserService** | 8006 | user_db (3308) | Profile Management, Activity Levels, Health Data |
+| **WorkoutService** | 8007 | workout_db (3309) | **MET-based Calorie Calculation**, Exercise Management |
+| **MealService** | 8008 | meal_db (3310) | **Auto-sync Calories**, Nutrition Tracking |
+| **AnalystService** | 8009 | analyst_db (3311) | **AI Health Analytics**, BMI/BMR/TDEE Calculations |
 
-## 🔥 Key Features
+## 🔥 Key Features & Innovations
 
-### ⚡ Advanced Calorie Management
-- **WorkoutService**: MET-based scientific calorie calculation (CARDIO: 7.0, HIIT: 9.0, YOGA: 2.8, etc.)
-- **MealService**: Automatic calorie synchronization (meal calories = sum of food calories)
-- **AnalystService**: Personalized TDEE calculation based on actual workout data
+### ⚡ Auto-Calculate Engines
+- **WorkoutService**: MET-based scientific calorie calculation
+  - Formula: `Calories = MET × weight(kg) × duration(hours)`
+  - 7 workout types với MET values: HIIT (9.0), CARDIO (7.0), YOGA (2.8)
+- **MealService**: Auto-sync calories từ food components
+  - Formula: `Meal Calories = Sum(Food Calories)`
+- **AnalystService**: AI-powered TDEE calculation dựa trên workout patterns
 
 ### 🧠 AI-Powered Analytics
-- **Health Metrics**: BMI, BMR calculation using Mifflin-St Jeor equation
-- **Activity Analysis**: Machine learning approach for activity factor calculation
-- **Dual Strategy**: Manual vs Workout-based TDEE calculation
-- **Smart Recommendations**: Health advice based on user data
+- **BMI/BMR/TDEE**: Scientific calculations với Mifflin-St Jeor equation
+- **Activity Analysis**: Machine learning approach cho activity factor
+- **Smart Recommendations**: Personalized health advice
+- **Dual Strategy**: Manual vs Workout-based calculations
 
 ### 🔒 Enterprise Security
-- **Centralized Authentication**: JWT-based authentication at API Gateway
-- **Token Blacklist**: Redis-powered token revocation
+- **Centralized JWT Authentication** tại API Gateway
+- **Redis Token Blacklist** cho logout functionality
 - **Rate Limiting**: 100 requests/second protection
-- **Circuit Breaker**: Fault tolerance with Resilience4j
+- **Circuit Breaker**: Fault tolerance với Resilience4j
 
 ### 📈 Performance Optimization
 - **Batch Queries**: Optimized database operations
-- **Caching Strategy**: Redis for frequently accessed data
-- **Microservice Isolation**: Independent scaling per service
-- **Service Discovery**: Automatic service registration with Eureka
+- **JPA Lifecycle Hooks**: Auto-calculation triggers
+- **Service Discovery**: Eureka-based service registration
+- **Microservice Isolation**: Independent scaling
 
-## Cấu trúc hệ thống
+## 🏗️ System Architecture
 
 ```
-health_backend/androidstu_backend/
-├── apiservice/        # 🌐 API Gateway Service (Port: 8080)
-├── authservice/       # 🔐 Authentication Service (Port: 8005)
-├── userservice/       # 👤 User Management Service (Port: 8006)
-├── workoutservice/    # 🏃 Workout Management Service (Port: 8007)
-├── mealservice/       # 🍽️ Meal Management Service (Port: 8008)
-├── analystservice/    # 📊 Health Analytics Service (Port: 8083)
-├── discoveryserver/   # 🎯 Eureka Service Discovery Server (Port: 8761)
-└── README.md         # 📚 This file
+                    ┌───────────────────────────┐
+                    │       API Gateway         │
+                    │      (Port: 8080)         │
+                    │    • JWT Authentication   │
+                    │    • Rate Limiting        │
+                    │    • Circuit Breaker      │
+                    │    • Request Routing      │
+                    └─────────────┬─────────────┘
+                                 │
+    ┌────────────┬──────────────┼──────────────┬────────────┬────────────┐
+    │            │              │              │            │            │
+┌───▼───┐    ┌───▼───┐    ┌─────▼─────┐    ┌───▼───┐    ┌───▼───┐    ┌───▼───┐
+│AuthSvc│    │UserSvc│    │WorkoutSvc │    │MealSvc│    │Analyst│    │Eureka │
+│ :8005 │    │ :8006 │    │   :8007   │    │ :8008 │    │ :8009 │    │ :8761 │
+└───┬───┘    └───┬───┘    └─────┬─────┘    └───┬───┘    └───┬───┘    └───────┘
+    │            │              │              │            │
+┌───▼───┐    ┌───▼───┐    ┌─────▼─────┐    ┌───▼───┐    ┌───▼───┐
+│auth_db│    │user_db│    │workout_db │    │meal_db│    │analyst│
+│ :3307 │    │ :3308 │    │   :3309   │    │ :3310 │    │ :3311 │
+└───────┘    └───────┘    └───────────┘    └───────┘    └───────┘
+                                │
+                          ┌─────▼─────┐
+                          │   Redis   │
+                          │ (Blacklist)│
+                          │   :6379   │
+                          └───────────┘
 ```
 
-## 🔄 Luồng hoạt động
+## 📊 Service Details
+
+### 🌐 API Gateway (Port 8080)
+**Role:** Central Entry Point & Security Layer
+
+**Tính năng:**
+- **Định tuyến thông minh**: Routes đến đúng microservice
+- **JWT Authentication**: Xác thực tập trung cho tất cả protected endpoints
+- **Token Blacklist**: Kiểm tra token bị vô hiệu hóa qua Redis
+- **Rate Limiting**: 100 requests/second per client
+- **Circuit Breaker**: Ngăn chặn lỗi lan truyền
+- **CORS Support**: Cross-origin resource sharing
+
+**Routing Rules:**
+- `/auth/**` → AuthService (Public)
+- `/users/**` → UserService (Auth Required)
+- `/workouts/**` → WorkoutService (Auth Required)
+- `/meals/**` → MealService (Auth Required)
+- `/analytics/**` → AnalystService (Auth Required)
+
+### 🔐 AuthService (Port 8005)
+**Role:** Authentication & Authorization
+
+**Tính năng:**
+- **User Registration**: Tạo tài khoản với validation
+- **JWT Authentication**: Secure login với token generation
+- **Password Management**: Đổi mật khẩu với token refresh
+- **Token Blacklist**: Logout với Redis-based token revocation
+- **User Sync**: Tự động tạo profile trong UserService
+
+**Database:** auth_db (MySQL port 3307)
+
+### 👤 UserService (Port 8006)
+**Role:** User Profile & Health Data Management
+
+**Tính năng:**
+- **Profile Management**: Thông tin cá nhân (fullName, email, gender, birthDate)
+- **Health Data**: Thông số sức khỏe (weight, height)
+- **Activity Levels**: 5 levels từ SEDENTARY (1.2) đến EXTRA_ACTIVE (1.9)
+- **Security**: Bảo vệ email/password không thể cập nhật
+- **Integration**: Đồng bộ với AuthService và AnalystService
+
+**Database:** user_db (MySQL port 3308)
+
+### 🏃 WorkoutService (Port 8007)
+**Role:** Workout Management & MET-based Calorie Calculation
+
+**🔥 Advanced Features:**
+- **MET-based Calculation**: Scientific calorie calculation
+  - Formula: `Calories = MET × weight(kg) × duration(hours)`
+- **7 Workout Types**: CARDIO (7.0), STRENGTH (4.5), HIIT (9.0), CROSSFIT (9.0), YOGA (2.8), PILATES (3.5), FLEXIBILITY (2.5)
+- **Exercise Management**: Sets, reps, duration tracking
+- **Schedule Management**: Workout planning với 5 statuses
+- **Statistics**: Daily/Weekly/Monthly calorie burn analytics
+- **Auto-calculation**: JPA lifecycle hooks ensure accuracy
+
+**Database:** workout_db (MySQL port 3309)
+
+### 🍽️ MealService (Port 8008)
+**Role:** Nutrition Management & Auto-sync Calories
+
+**🔥 Advanced Features:**
+- **Auto-sync Calories**: `Meal Calories = Sum(Food Calories)`
+- **4 Meal Types**: BREAKFAST, LUNCH, DINNER, SNACK
+- **3 Meal Status**: SCHEDULED, COMPLETED, CANCELLED
+- **Food Management**: Individual food items với calorie tracking
+- **Schedule Planning**: Meal scheduling với date ranges
+- **Statistics**: Daily/Weekly/Monthly calorie intake analytics
+- **Data Consistency**: JPA lifecycle hooks đảm bảo accuracy
+
+**Database:** meal_db (MySQL port 3310)
+
+### 📊 AnalystService (Port 8009)
+**Role:** AI-Powered Health Analytics
+
+**🧠 AI Features:**
+- **Health Analytics**: BMI, BMR, TDEE calculations
+  - BMR: Mifflin-St Jeor equation
+  - TDEE: Activity factor-based calculation
+- **Activity Analysis**: AI-based workout pattern analysis
+- **Dual Strategy**: Manual vs Workout-based TDEE calculation
+- **Calorie Analysis**: Intake vs burn comparison
+- **Smart Recommendations**: Health advice dựa trên BMI categories
+- **Integration**: Kết nối UserService và WorkoutService cho data
+
+**Database:** analyst_db (MySQL port 3311)
+
+## 🔄 System Workflows
 
 ### Authentication Flow
 ```
-1. Client → API Gateway (/auth/signup or /auth/login)
+1. Client → API Gateway (/auth/signup hoặc /auth/login)
 2. API Gateway → AuthService (validate credentials)
-3. AuthService → UserService (create/update profile)
+3. AuthService → UserService (create/sync profile)
 4. AuthService ← UserService (profile confirmation)
 5. Client ← API Gateway (JWT token + user info)
 ```
 
 ### Business Logic Flow
 ```
-1. Client → API Gateway (with JWT token)
+1. Client → API Gateway (với JWT token)
 2. API Gateway validates JWT + checks Redis blacklist
-3. API Gateway → Target Service (WorkoutService/MealService/etc.)
-4. Target Service processes business logic
+3. API Gateway → Target Service
+4. Target Service processes + auto-calculations
 5. Client ← API Gateway (response data)
 ```
 
 ### Inter-Service Communication
 ```
-- AnalystService → UserService (get user profile data)
-- AnalystService → WorkoutService (get workout statistics)
-- AuthService → UserService (create user profile)
-- WorkoutService ↔ AnalystService (activity data exchange)
+- AuthService ↔ UserService (user profile sync)
+- AnalystService → UserService (get health data)
+- AnalystService → WorkoutService (get activity data)
+- WorkoutService → UserService (get weight for MET calculation)
 ```
 
-## Chi tiết từng Service
+## ⚙️ Tech Stack
 
-### 1. 🌐 APIService (API Gateway)
+### Core Technologies
+- **Framework**: Spring Boot 3.2.3
+- **Language**: Java 21
+- **Security**: Spring Security + JWT (JJWT 0.11.5)
+- **Database**: MySQL 8.0 (per service)
+- **Cache**: Redis (token blacklist)
+- **Service Discovery**: Netflix Eureka
+- **API Gateway**: Spring Cloud Gateway
+- **Resilience**: Resilience4j (Circuit Breaker + Rate Limiter)
 
-**Port**: 8080 | **Role**: Central Entry Point
+### Dependencies
+- **ORM**: Spring Data JPA + Hibernate
+- **Validation**: Bean Validation (Jakarta Validation)
+- **Documentation**: SpringDoc OpenAPI (Swagger)
+- **Testing**: Spring Boot Test + Testcontainers
+- **Monitoring**: Spring Boot Actuator
 
-**Core Features**:
-- **JWT Authentication**: Validates tokens for all protected endpoints
-- **Token Blacklist**: Redis-based token revocation checking  
-- **Rate Limiting**: 100 requests/second per client
-- **Circuit Breaker**: Automatic failover for downstream services
-- **Request Routing**: Routes to appropriate microservices
-- **CORS Handling**: Cross-origin request management
+## 🚀 Installation & Setup
 
-**Key Endpoints**:
-- `/auth/**` → AuthService
-- `/users/**` → UserService  
-- `/workouts/**` → WorkoutService
-- `/meals/**` → MealService
-- `/analytics/**` → AnalystService
-
-Xem chi tiết tại [APIService README](./apiservice/README.md)
-
-### 2. 🔐 AuthService
-
-**Port**: 8005 | **Database**: auth_db (3306) | **Role**: Authentication & Authorization
-
-**Core Features**:
-- **User Registration**: Account creation with validation
-- **JWT Authentication**: Secure login with token generation  
-- **Password Management**: Secure password change with token refresh
-- **Token Blacklist**: Logout functionality with Redis-based token revocation
-- **User Integration**: Automatic UserService profile creation
-
-**Key Endpoints**:
-- `POST /auth/signup` - Register new user
-- `POST /auth/login` - User authentication
-- `POST /auth/change-password` - Password update
-- `POST /auth/logout` - Token revocation
-- `GET /auth/users/me` - Current user info
-
-Xem chi tiết tại [AuthService README](./authservice/README.md)
-
-### 3. 👤 UserService
-
-**Port**: 8006 | **Database**: user_db (3307) | **Role**: User Profile Management
-
-**Core Features**:
-- **Profile Management**: Personal information (name, email, phone, address)
-- **Health Data**: Physical metrics (height, weight, birth date, gender)
-- **Security**: Read-only email, password changes via AuthService
-- **Integration**: Profile creation triggered by AuthService
-
-**Key Endpoints**:
-- `GET /users/me` - Current user profile
-- `GET /users/{id}` - User by ID
-- `PUT /users/{id}` - Update profile  
-- `GET /users/email/{email}` - User by email
-- `PUT /users/{id}/security` - Security change guidance
-
-Xem chi tiết tại [UserService README](./userservice/README.md)
-
-### 4. 🏃 WorkoutService
-
-**Port**: 8007 | **Database**: workout_db (3309) | **Role**: Workout & Calorie Management
-
-**🔥 Advanced Features**:
-- **MET-based Calorie Calculation**: Scientific calorie calculation using Metabolic Equivalent of Task
-- **Auto-calculation**: Calories = MET × weight(kg) × duration(hours)
-- **7 Workout Types**: CARDIO(7.0), STRENGTH(4.5), HIIT(9.0), YOGA(2.8), PILATES(3.5), CROSSFIT(9.0), FLEXIBILITY(2.5)
-- **Exercise Management**: Detailed exercise tracking with sets, reps, duration
-- **Schedule Management**: Workout planning with status tracking
-- **Calorie Statistics**: Daily/Weekly/Monthly calorie burn analytics
-
-**Key Endpoints**:
-- `POST /workouts` - Create workout (auto-calculate calories)
-- `POST /workouts/schedules` - Create workout schedule
-- `POST /workouts/scheduled-workouts` - Schedule specific workout
-- `GET /calories-burned/daily/{userId}` - Daily calorie statistics
-- `GET /calories-burned/weekly/{userId}` - Weekly calorie statistics
-- `PATCH /workouts/scheduled-workouts/{id}/status/{status}` - Update workout status
-
-Xem chi tiết tại [WorkoutService README](./workoutservice/README.md)
-
-### 5. 🍽️ MealService
-
-**Port**: 8008 | **Database**: meal_db (3310) | **Role**: Nutrition & Meal Management
-
-**🔥 Advanced Features**:
-- **Auto-sync Calories**: Meal calories = Sum of food calories (automatic calculation)
-- **Meal Types**: BREAKFAST, LUNCH, DINNER, SNACK
-- **Meal Status**: SCHEDULED, COMPLETED, CANCELLED
-- **Food Management**: Individual food items with calorie tracking
-- **Schedule Planning**: Meal scheduling with date ranges
-- **Calorie Analytics**: Daily/Weekly/Monthly calorie intake statistics
-
-**Key Endpoints**:
-- `POST /meals` - Create meal (auto-calculate calories from foods)
-- `POST /meals/schedules` - Create meal schedule
-- `POST /meals/scheduled-meals` - Schedule specific meal
-- `GET /calories/daily/{userId}` - Daily calorie intake
-- `GET /calories/weekly/{userId}` - Weekly calorie intake
-- `PATCH /meals/scheduled-meals/{id}/status/{status}` - Update meal status
-
-Xem chi tiết tại [MealService README](./mealservice/README.md)
-
-### 6. 📊 AnalystService
-
-**Port**: 8083 | **Database**: None (Data Consumer) | **Role**: Health Analytics & AI Calculations
-
-**🧠 AI-Powered Features**:
-- **Dual Controller Architecture**: 
-  - `HealthAnalyticsController`: Basic health metrics (BMI, BMR, TDEE)
-  - `ActivityAnalysisController`: AI-based activity analysis
-- **Scientific Calculations**: Mifflin-St Jeor equation for BMR
-- **Activity Factor Mapping**: 0-7+ workout days → 1.2-1.9 activity factor
-- **Smart TDEE**: Workout-based vs Manual calculation strategies
-- **Health Recommendations**: Personalized advice based on BMI categories
-
-**Key Endpoints**:
-- `GET /analytics/health-analytics/health-metrics/{userId}` - Complete health profile
-- `GET /analytics/health-analytics/tdee/{userId}` - TDEE calculation
-- `GET /analytics/activity-analysis/user/{userId}` - AI activity analysis  
-- `GET /analytics/activity-analysis/user/{userId}/workout-based-tdee` - Smart TDEE
-- `POST /analytics/health-analytics/calculate-bmi` - Direct BMI calculation
-
-Xem chi tiết tại [AnalystService README](./analystservice/README.md)
-
-## 🚀 Cài đặt và Chạy
-
-### Yêu cầu hệ thống
+### Prerequisites
 - **Java 21** (JDK)
 - **Maven 3.9+**
 - **Docker & Docker Compose**
-- **MySQL 8.0+** 
-- **Redis** (cho token blacklist)
+- **MySQL 8.0+**
+- **Redis 6.0+**
 
-### Quick Start với Docker
+### Quick Start
 
-1. **Khởi tạo databases và Redis:**
+#### 1. Infrastructure Setup
 ```bash
 # Redis for token blacklist
 docker run --name redis -p 6379:6379 -d redis
@@ -288,262 +237,210 @@ docker run --name meal-mysql -p 3310:3306 -e MYSQL_ROOT_PASSWORD=secret -e MYSQL
 docker run --name analyst-mysql -p 3311:3306 -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=analyst_db -d mysql:8.0
 ```
 
-### Cài đặt và cấu hình Eureka Server (Service Discovery)
-
-Eureka Server giúp các microservice đăng ký và tìm kiếm lẫn nhau:
-
-1. **Tạo Eureka Server project:**
+#### 2. Service Discovery (Eureka Server)
 ```bash
-mkdir discoveryserver
-cd discoveryserver
+# Tạo Eureka Server nếu chưa có
+mkdir discoveryserver && cd discoveryserver
+
+# Khởi chạy Eureka Server
+mvn spring-boot:run
+# Dashboard: http://localhost:8761
 ```
 
-2. **Tạo file `pom.xml`:**
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
-        <relativePath/>
-    </parent>
-    <groupId>com.example</groupId>
-    <artifactId>discoveryserver</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>discoveryserver</name>
-    <description>Eureka Service Discovery Server</description>
-    
-    <properties>
-        <java.version>21</java.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
-    </properties>
-    
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
-        </dependency>
-    </dependencies>
-    
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-```
-
-3. **Tạo main application class:**
+#### 3. Start Services (theo thứ tự)
 ```bash
-mkdir -p src/main/java/com/example/discoveryserver
-mkdir -p src/main/resources
+# 1. API Gateway
+cd apiservice && mvn spring-boot:run &
+
+# 2. Core Services (có thể song song)
+cd authservice && mvn spring-boot:run &
+cd userservice && mvn spring-boot:run &
+cd workoutservice && mvn spring-boot:run &
+cd mealservice && mvn spring-boot:run &
+cd analystservice && mvn spring-boot:run &
 ```
 
-`src/main/java/com/example/discoveryserver/DiscoveryServerApplication.java`:
-```java
-package com.example.discoveryserver;
+#### 4. Health Check
+```bash
+# Check Eureka Dashboard
+curl http://localhost:8761
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+# Check API Gateway
+curl http://localhost:8080/actuator/health
 
-@SpringBootApplication
-@EnableEurekaServer
-public class DiscoveryServerApplication {
+# Check all services registered
+curl http://localhost:8761/eureka/apps
+```
 
-    public static void main(String[] args) {
-        SpringApplication.run(DiscoveryServerApplication.class, args);
-    }
+## 🧪 API Testing với Postman
+
+### Environment Variables
+```json
+{
+  "gateway_url": "http://localhost:8080",
+  "user_email": "test@example.com",
+  "user_password": "password123",
+  "access_token": "",
+  "user_id": ""
 }
 ```
 
-4. **Cấu hình Eureka Server (`src/main/resources/application.properties`):**
-```properties
-# Server Configuration
-server.port=8761
+### Complete Test Workflow
 
-# Eureka Configuration  
-eureka.client.register-with-eureka=false
-eureka.client.fetch-registry=false
-eureka.server.enable-self-preservation=false
+#### 1. Authentication Tests
+```json
+// User Registration
+POST {{gateway_url}}/auth/signup
+{
+  "fullName": "Test User",
+  "email": "{{user_email}}",
+  "password": "{{user_password}}"
+}
 
-# Application Name
-spring.application.name=discovery-server
+// User Login - Save token
+POST {{gateway_url}}/auth/login
+{
+  "email": "{{user_email}}",
+  "password": "{{user_password}}"
+}
 ```
 
-### 🏃‍♂️ Khởi chạy các Service
+#### 2. User Profile Tests
+```json
+// Get User Profile
+GET {{gateway_url}}/users/{{user_id}}
+Authorization: Bearer {{access_token}}
 
-**Thứ tự khởi động quan trọng:**
+// Update User Profile
+PUT {{gateway_url}}/users/{{user_id}}
+Authorization: Bearer {{access_token}}
+{
+  "fullName": "Updated Name",
+  "gender": "MALE",
+  "birthDate": "1990-01-15",
+  "weight": 70.0,
+  "height": 175.0
+}
 
-1. **Khởi chạy Eureka Server:**
-```bash
-cd discoveryserver
-mvn spring-boot:run
-```
-*Dashboard: http://localhost:8761*
-
-2. **Khởi chạy API Gateway:**
-```bash
-cd apiservice  
-mvn spring-boot:run
-```
-
-3. **Khởi chạy các microservices (có thể song song):**
-```bash
-# Terminal 1
-cd authservice
-mvn spring-boot:run
-
-# Terminal 2  
-cd userservice
-mvn spring-boot:run
-
-# Terminal 3
-cd workoutservice
-mvn spring-boot:run
-
-# Terminal 4
-cd mealservice
-mvn spring-boot:run
-
-# Terminal 5
-cd analystservice
-mvn spring-boot:run
+// Set Activity Level
+PUT {{gateway_url}}/users/{{user_id}}/activity-level?activityLevel=MODERATELY_ACTIVE
+Authorization: Bearer {{access_token}}
 ```
 
-### ✅ Health Check
+#### 3. Workout Tests (MET-based Calculation)
+```json
+// Create HIIT Workout (9.0 MET)
+POST {{gateway_url}}/workouts
+Authorization: Bearer {{access_token}}
+{
+  "name": "Morning HIIT",
+  "type": "HIIT",
+  "durationMinutes": 30,
+  "exercises": [
+    {
+      "name": "Burpees",
+      "sets": 3,
+      "reps": 10,
+      "durationSeconds": 300
+    }
+  ]
+}
 
-Kiểm tra các service đã startup thành công:
+// Get Daily Calorie Burn Stats
+GET {{gateway_url}}/workouts/calories-burned/daily/{{user_id}}?date=2024-01-15
+Authorization: Bearer {{access_token}}
+```
 
+#### 4. Meal Tests (Auto-sync Calories)
+```json
+// Create Breakfast (Auto-calculate calories)
+POST {{gateway_url}}/meals
+Authorization: Bearer {{access_token}}
+{
+  "name": "Healthy Breakfast",
+  "type": "BREAKFAST",
+  "foods": [
+    {
+      "name": "Oatmeal",
+      "calories": 150
+    },
+    {
+      "name": "Banana",
+      "calories": 105
+    }
+  ]
+}
+
+// Get Daily Calorie Intake
+GET {{gateway_url}}/meals/calories/daily/{{user_id}}?date=2024-01-15
+Authorization: Bearer {{access_token}}
+```
+
+#### 5. Analytics Tests (AI-Powered)
+```json
+// Get Complete Health Metrics
+GET {{gateway_url}}/analytics/health-analytics/health-metrics/{{user_id}}
+Authorization: Bearer {{access_token}}
+
+// Get TDEE with Strategy (Auto-select best method)
+GET {{gateway_url}}/analytics/health-analytics/tdee/{{user_id}}/strategy
+Authorization: Bearer {{access_token}}
+
+// Activity Analysis (AI-based)
+GET {{gateway_url}}/analytics/activity-analysis/user/{{user_id}}
+Authorization: Bearer {{access_token}}
+```
+
+## 📊 Monitoring & Observability
+
+### Health Check Endpoints
 ```bash
-# Eureka Dashboard
+# Service Discovery
 curl http://localhost:8761
 
 # API Gateway Health
 curl http://localhost:8080/actuator/health
 
-# Individual Services Health  
+# Individual Services
 curl http://localhost:8005/actuator/health  # AuthService
-curl http://localhost:8006/actuator/health  # UserService
+curl http://localhost:8006/actuator/health  # UserService  
 curl http://localhost:8007/actuator/health  # WorkoutService
 curl http://localhost:8008/actuator/health  # MealService
 curl http://localhost:8009/actuator/health  # AnalystService
 ```
 
-## 🧪 Testing với Postman
-
-### Environment Setup
-Tạo Postman Environment với variables:
-```json
-{
-  "api_gateway": "http://localhost:8080",
-  "jwt_token": "",
-  "user_id": "",
-  "user_email": "test@example.com"
-}
-```
-
-### Complete Test Flow
-
-1. **User Registration:**
-```
-POST {{api_gateway}}/auth/signup
-{
-  "fullName": "John Doe",
-  "email": "john@example.com", 
-  "password": "password123"
-}
-```
-
-2. **User Login:**
-```
-POST {{api_gateway}}/auth/login
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-*Save JWT token to environment*
-
-3. **Get User Profile:**
-```
-GET {{api_gateway}}/users/me
-Authorization: Bearer {{jwt_token}}
-```
-
-4. **Create Workout with Auto-Calorie Calculation:**
-```
-POST {{api_gateway}}/workouts
-Authorization: Bearer {{jwt_token}}
-{
-  "name": "HIIT Training",
-  "description": "High intensity interval training",
-  "type": "HIIT",
-  "durationMinutes": 30,
-  "caloriesBurned": 405,
-  "exercises": [...]
-}
-```
-
-5. **Create Meal with Auto-Calorie Sync:**
-```
-POST {{api_gateway}}/meals
-Authorization: Bearer {{jwt_token}}
-{
-  "name": "Protein Breakfast",
-  "type": "BREAKFAST",
-  "foods": [
-    {
-      "name": "Eggs",
-      "calories": 150
-    },
-    {
-      "name": "Oatmeal", 
-      "calories": 200
-    }
-  ]
-}
-```
-
-6. **Get Health Analytics:**
-```
-GET {{api_gateway}}/analytics/health-analytics/health-metrics/{{user_id}}
-Authorization: Bearer {{jwt_token}}
-```
-
-7. **Get Calorie Statistics:**
-```
-GET {{api_gateway}}/workouts/calories-burned/daily/{{user_id}}?date=2024-01-15
-Authorization: Bearer {{jwt_token}}
-
-GET {{api_gateway}}/meals/calories/daily/{{user_id}}?date=2024-01-15  
-Authorization: Bearer {{jwt_token}}
-```
-
-Xem chi tiết test cases trong README của từng service.
-
-## 📈 Performance & Monitoring
-
-### Monitoring Endpoints
+### Metrics & Monitoring
 - **Eureka Dashboard**: http://localhost:8761
-- **Actuator Health**: `/actuator/health` trên mỗi service
-- **Metrics**: `/actuator/metrics` 
+- **Actuator Metrics**: `/actuator/metrics` trên mỗi service
+- **Health Indicators**: `/actuator/health` với detailed status
 - **Prometheus**: `/actuator/prometheus` (if enabled)
+
+## 🎯 Key Benefits
+
+### 🔥 Business Value
+- **Scientific Accuracy**: MET-based workout calories + auto-sync meal calories
+- **AI-Powered Insights**: Smart health recommendations và TDEE calculations
+- **Real-time Updates**: Auto-calculation engines ensure data consistency
+- **Comprehensive Tracking**: Complete health ecosystem từ nutrition đến fitness
+
+### ⚡ Technical Excellence
+- **Microservice Architecture**: Independent scaling và deployment
+- **Enterprise Security**: JWT + Redis blacklist + rate limiting
+- **Performance Optimization**: Batch queries + lifecycle hooks
+- **Fault Tolerance**: Circuit breakers + service discovery
+
+### 📈 Scalability & Reliability
+- **Service Isolation**: Each service có own database và responsibilities
+- **Load Distribution**: API Gateway routes efficiently
+- **Data Consistency**: Auto-calculation engines prevent manual errors
+- **Monitoring Ready**: Comprehensive health checks và metrics
+
+## 📚 Documentation
+
+### Individual Service READMEs
+- [API Gateway Documentation](./apiservice/README.md)
+- [AuthService Documentation](./authservice/README.md)
+- [UserService Documentation](./userservice/README.md)
+- [WorkoutService Documentation](./workoutservice/README.md)
+- [MealService Documentation](./mealservice/README.md)
+- [AnalystService Documentation](./analystservice/README.md)

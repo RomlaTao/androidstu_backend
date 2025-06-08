@@ -1,288 +1,227 @@
-# User Service
+# UserService
 
-## Giới thiệu
-User Service là một microservice được xây dựng bằng Spring Boot, cung cấp các chức năng quản lý thông tin người dùng và dữ liệu sức khỏe. Service này tương tác với AuthService để xác thực người dùng thông qua JWT.
+## Chức năng chính
 
-## Công nghệ sử dụng
-- Java 21
-- Spring Boot 3.2.3
-- Spring Security
-- JWT (JJWT 0.11.5)
-- Spring Data JPA
-- MySQL Database
-- Maven
+**UserService** là dịch vụ quản lý hồ sơ người dùng trong hệ thống microservices, chuyên trách lưu trữ và quản lý thông tin cá nhân của người dùng.
 
-## Cấu trúc Project
-```
-userservice/
-├── src/main/java/com/example/userservice/
-│   ├── configs/            # Cấu hình Spring Security và JWT
-│   ├── controllers/        # REST Controllers
-│   ├── dtos/              # Data Transfer Objects
-│   ├── entities/          # JPA Entities
-│   ├── exceptions/        # Exception Handlers
-│   ├── repositories/      # Spring Data Repositories
-│   ├── services/         # Business Logic Services
-│   └── UserserviceApplication.java
-```
+### 👤 Quản Lý Hồ Sơ Người Dùng
+- **User Profile**: Quản lý thông tin cá nhân (fullName, email, gender, birthDate)
+- **Health Info**: Quản lý thông tin sức khỏe (weight, height)
+- **Activity Level**: Quản lý mức độ hoạt động ban đầu (5 levels từ Sedentary đến Extra Active)
+- **User Sync**: Đồng bộ dữ liệu với AuthService
+- **Profile Validation**: Validation đầy đủ cho dữ liệu đầu vào
+- **Security**: Bảo vệ email/password không thể cập nhật
 
-## API Endpoints
+### 🔗 Tích Hợp Hệ Thống
+- **AuthService Integration**: Đồng bộ user sau registration
+- **JWT Authentication**: Xác thực qua shared JWT secret
+- **Profile Completion**: Thông báo AuthService khi hoàn tất profile
+- **Separation of Concerns**: Tách biệt auth và profile management
 
-### Users
-- **GET** `/users` - Lấy danh sách tất cả người dùng (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users`
-  Response:
-  ```json
-  [
-    {
-      "id": "number",
-      "fullName": "string",
-      "email": "string",
-      "phoneNumber": "string",
-      "address": "string",
-      "birthDate": "date",
-      "gender": "string",
-      "height": "number",
-      "weight": "number",
-      "createdAt": "datetime",
-      "updatedAt": "datetime"
-    }
-  ]
-  ```
+### 📊 Activity Level Management
+- **5 Activity Levels**: SEDENTARY (1.2) → EXTRA_ACTIVE (1.9)
+- **Factor Calculation**: Mỗi level có factor cho TDEE calculation
+- **Timestamp Tracking**: Theo dõi thời gian set activity level
+- **Integration Ready**: Chuẩn bị cho AnalystService sử dụng
 
-- **GET** `/users/{id}` - Lấy thông tin người dùng theo ID (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/{id}`
-  Response:
-  ```json
-  {
-    "id": "number",
-    "fullName": "string",
-    "email": "string",
-    "phoneNumber": "string",
-    "address": "string",
-    "birthDate": "date",
-    "gender": "string",
-    "height": "number",
-    "weight": "number",
-    "createdAt": "datetime",
-    "updatedAt": "datetime"
-  }
-  ```
+## Cấu hình
 
-- **GET** `/users/me` - Lấy thông tin người dùng hiện tại từ token JWT (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/me`
-  Response: UserDto object (định dạng như trên)
-
-- **GET** `/users/email/{email}` - Lấy thông tin người dùng theo email (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/email/{email}`
-  Response: UserDto object (định dạng như trên)
-
-- **POST** `/users` - Tạo người dùng mới (chủ yếu sử dụng bởi AuthService)
-  - API Gateway URL: `http://localhost:8080/users`
-  Request Body:
-  ```json
-  {
-    "fullName": "string",
-    "email": "string",
-    "phoneNumber": "string",
-    "address": "string",
-    "birthDate": "date",
-    "gender": "string",
-    "height": "number",
-    "weight": "number"
-  }
-  ```
-  Response: UserDto object đã tạo (định dạng như trên)
-
-- **PUT** `/users/{id}` - Cập nhật thông tin người dùng (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/{id}`
-  Request Body:
-  ```json
-  {
-    "fullName": "string",
-    "phoneNumber": "string",
-    "address": "string",
-    "birthDate": "date",
-    "gender": "string",
-    "height": "number",
-    "weight": "number"
-  }
-  ```
-  Lưu ý: Không thể cập nhật email và password qua endpoint này
-  Response: UserDto object đã cập nhật (định dạng như trên)
-
-- **PUT** `/users/{id}/security` - Hướng dẫn về thay đổi thông tin bảo mật (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/{id}/security`
-  Response:
-  ```json
-  {
-    "message": "Để thay đổi email và mật khẩu, vui lòng sử dụng AuthService",
-    "changePasswordEndpoint": "/auth/change-password"
-  }
-  ```
-
-- **DELETE** `/users/{id}` - Xóa người dùng (yêu cầu JWT)
-  - API Gateway URL: `http://localhost:8080/users/{id}`
-  Response: HTTP 204 No Content
-
-## Cài đặt và Chạy
-
-### Yêu cầu
-- Java Development Kit (JDK) 21
-- Maven 3.9+
-- MySQL 8.0+
-
-### Cài đặt MySQL bằng Docker
-
-1. Tạo container MySQL
-```bash
-docker run --name mysql-user -e MYSQL_ROOT_PASSWORD=yourpassword -e MYSQL_DATABASE=user_db -p 3307:3306 -d mysql:8.0
-```
-
-2. Kiểm tra container đã chạy
-```bash
-docker ps
-```
-
-3. Kết nối đến MySQL
-```bash
-docker exec -it mysql-user mysql -u root -p
-```
-
-### Các bước cài đặt
-
-1. Clone repository
-```bash
-git clone <repository-url>
-cd userservice
-```
-
-2. Cấu hình database trong `src/main/resources/application.properties`
+### Cấu Hình Cơ Bản
 ```properties
-# Server Configuration
+# Máy chủ
 server.port=8006
 
-# Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3307/user_db
+# Database MySQL
+spring.datasource.url=jdbc:mysql://localhost:3308/user_db
 spring.datasource.username=root
-spring.datasource.password=yourpassword
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.datasource.password=secret
 
-# JWT Configuration
-security.jwt.secret-key=your_secret_key_base64_encoded
-security.jwt.expiration-time=86400000  # 24 hours in milliseconds
+# JWT Security (Shared với AuthService)
+security.jwt.secret-key=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+security.jwt.expiration-time=3600000
+
+# AuthService Integration
+services.authservice.url=http://localhost:8005
+
+# Swagger Documentation
+springdoc.swagger-ui.path=/swagger-ui.html
+
+# Eureka Discovery
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
 ```
 
-3. Build project
+### Hạ Tầng Cần Thiết
+- **MySQL** (port 3308): Database user_db
+- **AuthService** (port 8005): Authentication service
+- **Eureka Server** (port 8761): Service discovery
+- **API Gateway** (port 8080): Request routing
+
+### Cài Đặt Database
 ```bash
-mvn clean install
+# MySQL với Docker
+docker run --name user-db -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=user_db -p 3308:3308 -d mysql:8.0
 ```
 
-4. Chạy ứng dụng
-```bash
-mvn spring-boot:run
+### Ngăn Xếp Công Nghệ
+- Spring Boot 3.2.3
+- Spring Security + JWT (JJWT 0.11.5)
+- MySQL Database + Spring Data JPA
+- Lombok (Code generation)
+- SpringDoc OpenAPI
+- Eureka Client
+
+## API Test Cases (Postman)
+
+### Environment Variables
+```json
+{
+  "gateway_url": "http://localhost:8080",
+  "user_email": "test@example.com",
+  "user_password": "password123",
+  "access_token": "",
+  "user_id": ""
+}
 ```
 
-Ứng dụng sẽ chạy mặc định trên port 8006.
+### 🔐 Prerequisite: Get Authentication Token
 
-## Kiểm thử API với Postman
+#### 1. Login (via AuthService)
+```json
+{
+  "method": "POST",
+  "url": "{{gateway_url}}/auth/login",
+  "headers": {"Content-Type": "application/json"},
+  "body": {
+    "email": "{{user_email}}",
+    "password": "{{user_password}}"
+  }
+}
+```
 
-### Collection Setup
+### 👤 User Profile Tests (Auth Required)
 
-1. Tạo một collection mới trong Postman với tên "User Service API"
-2. Đặt biến môi trường:
-   - `base_url`: http://localhost:8080
-   - `token`: <JWT token từ quá trình đăng nhập>
+#### 2. Lấy Thông Tin User Theo ID
+```json
+{
+  "method": "GET",
+  "url": "{{gateway_url}}/users/{{user_id}}",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
 
-### Test Cases
+#### 3. Lấy Danh Sách Tất Cả Users
+```json
+{
+  "method": "GET",
+  "url": "{{gateway_url}}/users",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
 
-1. **Đăng nhập để lấy token**
-   - Method: POST
-   - URL: {{base_url}}/auth/login
-   - Headers: Content-Type: application/json
-   - Body:
-     ```json
-     {
-       "email": "user@example.com",
-       "password": "password123"
-     }
-     ```
-   - Script (để lưu token):
-     ```javascript
-     pm.environment.set("token", pm.response.json().accessToken);
-     ```
+#### 4. Cập Nhật Thông Tin User
+```json
+{
+  "method": "PUT",
+  "url": "{{gateway_url}}/users/{{user_id}}",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {{access_token}}"
+  },
+  "body": {
+    "fullName": "Updated User Name",
+    "gender": "MALE",
+    "birthDate": "1990-01-15",
+    "weight": 75.5,
+    "height": 175.0
+  }
+}
+```
 
-2. **Lấy Thông Tin Người Dùng Hiện Tại**
-   - Method: GET
-   - URL: {{base_url}}/users/me
-   - Headers: Authorization: Bearer {{token}}
-   - Expected: 200 OK với thông tin người dùng
+**Expected Response:**
+```json
+{
+  "id": "user-id",
+  "fullName": "Updated User Name",
+  "email": "test@example.com",
+  "gender": "MALE",
+  "birthDate": "1990-01-15",
+  "weight": 75.5,
+  "height": 175.0,
+  "initialActivityLevel": null,
+  "createdAt": "2023-12-07T10:00:00",
+  "updatedAt": "2023-12-07T10:30:00"
+}
+```
 
-3. **Cập Nhật Thông Tin Người Dùng**
-   - Method: PUT
-   - URL: {{base_url}}/users/1
-   - Headers: 
-     - Content-Type: application/json
-     - Authorization: Bearer {{token}}
-   - Body:
-     ```json
-     {
-       "fullName": "Updated Name",
-       "height": 175,
-       "weight": 70
-     }
-     ```
-   - Expected: 200 OK với thông tin người dùng đã cập nhật
+### 📊 Activity Level Tests
 
-## Tính năng
-- Quản lý thông tin cá nhân người dùng
-- Quản lý dữ liệu sức khỏe (chiều cao, cân nặng)
-- Tích hợp với AuthService thông qua JWT
-- Cung cấp API để quản lý profile người dùng
+#### 5. Lấy Danh Sách Activity Levels
+```json
+{
+  "method": "GET",
+  "url": "{{gateway_url}}/users/activity-levels",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
 
-## Bảo mật
-- Xác thực dựa trên JWT (JSON Web Token) từ AuthService
-- Spring Security với các cấu hình bảo mật mặc định
-- Stateless authentication
-- CORS được cấu hình sẵn
+**Expected Response:**
+```json
+[
+  "SEDENTARY",
+  "LIGHTLY_ACTIVE", 
+  "MODERATELY_ACTIVE",
+  "VERY_ACTIVE",
+  "EXTRA_ACTIVE"
+]
+```
 
-## Quy trình hoạt động
-1. Khi người dùng đăng ký qua AuthService, AuthService sẽ gọi API tạo người dùng
-2. UserService lưu thông tin người dùng vào database riêng
-3. Khi cần truy cập thông tin người dùng, client gửi request với JWT token
-4. UserService xác thực JWT token và thực hiện các thao tác với database
-5. Thông tin email và password không thể sửa đổi qua UserService
+#### 6. Cập Nhật Activity Level
+```json
+{
+  "method": "PUT",
+  "url": "{{gateway_url}}/users/{{user_id}}/activity-level?activityLevel=MODERATELY_ACTIVE",
+  "headers": {
+    "Authorization": "Bearer {{access_token}}"
+  }
+}
+```
 
-## Cấu trúc Database
-### Bảng Users
-- id (Integer, Primary Key)
-- full_name (String)
-- email (String, Unique)
-- phone_number (String)
-- address (String)
-- birth_date (Date)
-- gender (String)
-- height (Float)
-- weight (Float)
-- created_at (Timestamp)
-- updated_at (Timestamp)
+### 🔧 Sync Operations (Internal)
 
-## Môi trường
-Các biến môi trường cần thiết:
-- `SERVER_PORT`: Port của UserService
-- `MYSQL_HOST`: Host của MySQL database
-- `MYSQL_PORT`: Port của MySQL database
-- `MYSQL_DATABASE`: Tên database
-- `MYSQL_USER`: Username MySQL
-- `MYSQL_PASSWORD`: Password MySQL
-- `JWT_SECRET_KEY`: Khóa bí mật cho JWT (Base64 encoded, phải giống với AuthService)
+#### 7. Đồng Bộ User Với ID Cụ Thể
+```json
+{
+  "method": "POST",
+  "url": "{{gateway_url}}/users/sync/{{user_id}}",
+  "headers": {"Content-Type": "application/json"},
+  "body": {
+    "fullName": "Synced User",
+    "email": "sync@example.com",
+    "gender": "FEMALE",
+    "birthDate": "1995-05-20",
+    "weight": 60.0,
+    "height": 165.0
+  }
+}
+```
 
-## Phát triển
-- Sử dụng các branch riêng cho mỗi tính năng mới
-- Tuân thủ code style của project
-- Viết unit test cho các chức năng mới
-- Sử dụng meaningful commit messages
+## Activity Level Reference
+| Level | Factor | Mô tả |
+|-------|--------|-------|
+| SEDENTARY | 1.2 | Ít hoặc không tập thể dục |
+| LIGHTLY_ACTIVE | 1.375 | Tập nhẹ 1-3 ngày/tuần |
+| MODERATELY_ACTIVE | 1.55 | Tập vừa 3-5 ngày/tuần |
+| VERY_ACTIVE | 1.725 | Tập nặng 6-7 ngày/tuần |
+| EXTRA_ACTIVE | 1.9 | Tập rất nặng + công việc thể lực |
 
-## License
-[MIT License](LICENSE) 
+## Luồng Hoạt Động
+1. **AuthService** → Signup → **UserService** (sync user với cùng ID)
+2. **Client** → Update profile → **UserService** → **AuthService** (mark completed)
+3. **Client** → Set activity level → **UserService** (lưu với timestamp)
+4. **AnalystService** → Lấy user info → **UserService** (cho health calculations) 
