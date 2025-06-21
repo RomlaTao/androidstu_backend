@@ -30,6 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/users/**").permitAll() // Cho phép truy cập API người dùng (hiện tại để public cho development)
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Cho phép truy cập Swagger UI
+                .requestMatchers("/actuator/**").permitAll() // Allow actuator endpoints for health checks
                 .anyRequest().authenticated()
             );
         

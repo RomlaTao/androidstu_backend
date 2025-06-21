@@ -34,6 +34,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable()) // Updated to new syntax
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll() // Allow actuator endpoints for health checks
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
