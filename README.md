@@ -20,34 +20,6 @@ Hệ thống backend Health App được xây dựng theo kiến trúc microserv
 | **MealService** | 8008 | meal_db (3310) | **Auto-sync Calories**, Nutrition Tracking |
 | **AnalystService** | 8009 | analyst_db (3311) | **AI Health Analytics**, BMI/BMR/TDEE Calculations |
 
-## 🔥 Key Features & Innovations
-
-### ⚡ Auto-Calculate Engines
-- **WorkoutService**: MET-based scientific calorie calculation
-  - Formula: `Calories = MET × weight(kg) × duration(hours)`
-  - 7 workout types với MET values: HIIT (9.0), CARDIO (7.0), YOGA (2.8)
-- **MealService**: Auto-sync calories từ food components
-  - Formula: `Meal Calories = Sum(Food Calories)`
-- **AnalystService**: AI-powered TDEE calculation dựa trên workout patterns
-
-### 🧠 AI-Powered Analytics
-- **BMI/BMR/TDEE**: Scientific calculations với Mifflin-St Jeor equation
-- **Activity Analysis**: Machine learning approach cho activity factor
-- **Smart Recommendations**: Personalized health advice
-- **Dual Strategy**: Manual vs Workout-based calculations
-
-### 🔒 Enterprise Security
-- **Centralized JWT Authentication** tại API Gateway
-- **Redis Token Blacklist** cho logout functionality
-- **Rate Limiting**: 100 requests/second protection
-- **Circuit Breaker**: Fault tolerance với Resilience4j
-
-### 📈 Performance Optimization
-- **Batch Queries**: Optimized database operations
-- **JPA Lifecycle Hooks**: Auto-calculation triggers
-- **Service Discovery**: Eureka-based service registration
-- **Microservice Isolation**: Independent scaling
-
 ## 🏗️ System Architecture
 
 ```
