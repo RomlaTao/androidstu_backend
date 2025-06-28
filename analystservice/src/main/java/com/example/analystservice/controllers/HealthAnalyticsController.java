@@ -48,24 +48,6 @@ public class HealthAnalyticsController {
                 .onErrorReturn(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/health-metrics/email/{email}")
-    @Operation(summary = "Get health metrics by email",
-            description = "Calculate BMI, BMR and provide health recommendations for a user by email")
-    public Mono<ResponseEntity<HealthMetricsDto>> getHealthMetricsByEmail(
-            @Parameter(description = "User email") @PathVariable("email") String email) {
-
-        return userServiceClient.getUserByEmail(email)
-                .map(user -> {
-                    try {
-                        HealthMetricsDto metrics = calculationService.createHealthMetrics(user);
-                        return ResponseEntity.ok(metrics);
-                    } catch (IllegalArgumentException e) {
-                        return ResponseEntity.badRequest().<HealthMetricsDto>build();
-                    }
-                })
-                .onErrorReturn(ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/tdee/{userId}")
     @Operation(summary = "Calculate TDEE for a user",
             description = "Calculate Total Daily Energy Expenditure with different activity levels")

@@ -14,13 +14,12 @@ services:
       MYSQL_DATABASE: auth_db
       MYSQL_USER: auth_user
       MYSQL_PASSWORD: auth_pass
-    ports:
-      - "3307:3306"
     volumes:
       - auth_db_data:/var/lib/mysql
       - ./authservice/src/main/resources/db_migration.sql:/docker-entrypoint-initdb.d/migration.sql
     networks:
-      - backend-network
+      backend-network:
+#        ipv4_address: 172.16.0.40
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -36,12 +35,11 @@ services:
       MYSQL_DATABASE: user_db
       MYSQL_USER: user_user
       MYSQL_PASSWORD: user_pass
-    ports:
-      - "3308:3306"
     volumes:
       - user_db_data:/var/lib/mysql
     networks:
-      - backend-network
+      backend-network:
+#        ipv4_address: 172.16.0.41
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -57,12 +55,11 @@ services:
       MYSQL_DATABASE: workout_db
       MYSQL_USER: workout_user
       MYSQL_PASSWORD: workout_pass
-    ports:
-      - "3309:3306"
     volumes:
       - workout_db_data:/var/lib/mysql
     networks:
-      - backend-network
+      backend-network:
+#        ipv4_address: 172.16.0.42
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -78,12 +75,11 @@ services:
       MYSQL_DATABASE: meal_db
       MYSQL_USER: meal_user
       MYSQL_PASSWORD: meal_pass
-    ports:
-      - "3310:3306"
     volumes:
       - meal_db_data:/var/lib/mysql
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.43
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -99,12 +95,11 @@ services:
       MYSQL_DATABASE: analyst_db
       MYSQL_USER: analyst_user
       MYSQL_PASSWORD: analyst_pass
-    ports:
-      - "3311:3306"
     volumes:
       - analyst_db_data:/var/lib/mysql
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.44
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -115,12 +110,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.50
     restart: unless-stopped
     command: redis-server --appendonly yes
     healthcheck:
@@ -142,7 +136,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.10
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
@@ -151,12 +146,12 @@ services:
       retries: 5
       start_period: 40s
 
-  # APIService (Gateway)
-  api-service:
+  # APIService (Gateway) - Instance 1
+  api-service-1:
     build:
       context: ./apiservice
       dockerfile: Dockerfile
-    container_name: api-service
+    container_name: api-service-1
     ports:
       - "8080:8080"
     environment:
@@ -164,13 +159,16 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
+      - SERVER_PORT=8080
+      - EUREKA_INSTANCE_HOSTNAME=api-service-1
     depends_on:
       discovery-server:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.20
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -178,6 +176,74 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+
+  # APIService (Gateway) - Instance 2
+  api-service-2:
+    build:
+      context: ./apiservice
+      dockerfile: Dockerfile
+    container_name: api-service-2
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SERVER_PORT=8080
+      - EUREKA_INSTANCE_HOSTNAME=api-service-2
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      backend-network:
+        # ipv4_address: 172.16.0.21
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ===========================================
+  # LOAD BALANCER
+  # ===========================================
+
+ # HAProxy Load Balancer
+  haproxy:
+   build:
+     context: ./haproxy
+     dockerfile: Dockerfile
+   container_name: haproxy
+   ports:
+     - "80:80"
+     - "8443:443"
+     - "8403:8403"
+     - "8404:8404"
+   volumes:
+     - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+     - ./ssl:/usr/local/etc/haproxy/ssl:ro
+     - /tmp/haproxy:/var/run
+   depends_on:
+     api-service-1:
+       condition: service_healthy
+     api-service-2:
+       condition: service_healthy
+     discovery-server:
+       condition: service_healthy
+   networks:
+     backend-network:
+       # ipv4_address: 172.16.0.100
+   restart: unless-stopped
+   healthcheck:
+     test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:80/actuator/health"]
+     interval: 10s
+     timeout: 5s
+     retries: 5
+     start_period: 30s
 
   # ===========================================
   # MICROSERVICES
@@ -189,8 +255,6 @@ services:
       context: ./authservice
       dockerfile: Dockerfile
     container_name: auth-service
-    ports:
-      - "8005:8005"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://auth-db:3306/auth_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
@@ -204,12 +268,15 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
-      api-service:
+      api-service-1:
+        condition: service_healthy
+      api-service-2:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.30
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8005/actuator/health"]
@@ -224,8 +291,6 @@ services:
       context: ./userservice
       dockerfile: Dockerfile
     container_name: user-service
-    ports:
-      - "8006:8006"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/user_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
@@ -245,7 +310,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.31
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/actuator/health"]
@@ -260,8 +326,6 @@ services:
       context: ./workoutservice
       dockerfile: Dockerfile
     container_name: workout-service
-    ports:
-      - "8007:8007"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://workout-db:3306/workout_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
@@ -281,7 +345,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.32
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8007/actuator/health"]
@@ -296,8 +361,6 @@ services:
       context: ./mealservice
       dockerfile: Dockerfile
     container_name: meal-service
-    ports:
-      - "8008:8008"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://meal-db:3306/meal_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
@@ -317,7 +380,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        # ipv4_address: 172.16.0.33
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8008/actuator/health"]
@@ -332,8 +396,6 @@ services:
       context: ./analystservice
       dockerfile: Dockerfile
     container_name: analyst-service
-    ports:
-      - "8009:8009"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://analyst-db:3306/analyst_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
@@ -359,7 +421,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - backend-network
+      backend-network:
+        #ipv4_address: 172.16.0.34
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8009/actuator/health"]
@@ -375,6 +438,10 @@ networks:
   backend-network:
     driver: bridge
     name: health-app-network
+    ipam:
+      config:
+        - subnet: 172.16.0.0/16
+          gateway: 172.16.0.1
 
 # ===========================================
 # VOLUMES

@@ -70,6 +70,6 @@ public class WorkoutServiceClient {
                 .retrieve()
                 .bodyToFlux(com.example.analystservice.dtos.WorkoutActivityDto.class)
                 .collectList()
-                .block(); // Note: This is blocking, consider making it reactive
+                .block();
     }
 }
